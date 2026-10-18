@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Car Log - Multi-Car & Maintenance</title>
+<title>Car Log - Multi-Vehicle & Maintenance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#0F2230">
@@ -53,6 +53,13 @@ h1,h2,h3,p{margin:0}
 .car-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:24px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;font-weight:600;color:var(--ink);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .car-pill:hover{border-color:var(--ink)}
 .car-pill svg{width:16px;height:16px;flex-shrink:0}
+.vt-ic{display:inline-flex;align-items:center}
+.car-card-body b .vt-ic{margin-right:7px;vertical-align:-3px}
+.car-card-body b .vt-ic svg{width:19px;height:19px}
+.vt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
+.vt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px 9px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink);font:600 13px/1.1 inherit;font-family:inherit;cursor:pointer}
+.vt svg{width:30px;height:30px}
+.vt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--surface)}
 
 h2{font:600 18px/1.2 var(--font-display)}
 .sec{margin-top:24px}
@@ -266,9 +273,9 @@ dialog.crop-ov::backdrop{background:#05080c}
 <div class="wrap">
   <header class="top-bar">
     <h1 class="page-title" id="page-hdr" data-act="tab" data-tab="home" style="cursor:pointer" role="button" aria-label="Go to Home">CarLog</h1>
-    <button class="car-pill" data-act="open-car-modal" aria-label="Go to Car Selection in Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-      <span id="active-car-name">Select Car</span>
+    <button class="car-pill" data-act="open-car-modal" aria-label="Go to Vehicle Selection in Settings">
+      <span class="vt-ic" id="active-car-icon"></span>
+      <span id="active-car-name">Select Vehicle</span>
       <span id="active-car-plate" class="small muted" style="opacity:.85"></span>
     </button>
   </header>
@@ -527,7 +534,7 @@ function initApp() {
       if (v1Fills || v1Pays || v1Svc) {
         const migrated = {
           id: 'car_' + uid(),
-          name: 'My Car',
+          name: 'My Vehicle',
           plate: '',
           odometer: 0,
           fills: v1Fills ? JSON.parse(v1Fills).rows || [] : [],
@@ -685,7 +692,7 @@ function exportToExcel() {
   const dashRows = [];
   dashRows.push([]);
   dashRows.push([]);
-  dashRows.push(["", "🚘  CAR MAINTENANCE DASHBOARD"]);
+  dashRows.push(["", "🚘  VEHICLE MAINTENANCE DASHBOARD"]);
   dashRows.push([]);
 
   const oil = (car.service || []).filter(svcIsKm).find(s => s.i === 'oil' || /oil/i.test(s.n)) || { n: 'Oil change', h: [] };
@@ -773,7 +780,7 @@ function exportToExcel() {
   });
 
   const dashWS = XLSX.utils.aoa_to_sheet(dashRows);
-  XLSX.utils.book_append_sheet(wb, dashWS, "CAR MAINTENANCE DASHBOARD");
+  XLSX.utils.book_append_sheet(wb, dashWS, "VEHICLE MAINTENANCE DASHBOARD");
 
   /* --- Sheet 2: Fuel Log --- */
   const fillsHeader = [["ID", "Date", "Odometer (km)", "Amount (AED)", "Rate/Litre", "Paid By (C/S)", "Litres", "Km Driven", "km/L Average"]];
@@ -813,7 +820,7 @@ function exportToExcel() {
   const svcWS = XLSX.utils.aoa_to_sheet([...svcHeader, ...svcRows]);
   XLSX.utils.book_append_sheet(wb, svcWS, "Service Log");
 
-  const fileName = `${car.name.replace(/\s+/g, '_')}_Average_Car_${ymd(new Date())}.xlsx`;
+  const fileName = `${car.name.replace(/\s+/g, '_')}_Average_Vehicle_${ymd(new Date())}.xlsx`;
   XLSX.writeFile(wb, fileName);
   toast(`Excel exported successfully! (${fileName})`);
 }
@@ -976,7 +983,7 @@ function downloadJsonBackup() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `CarLog_All_Cars_Backup_${ymd(new Date())}.json`;
+  a.download = `CarLog_All_Vehicles_Backup_${ymd(new Date())}.json`;
   a.click();
   URL.revokeObjectURL(url);
   render();
@@ -991,7 +998,7 @@ function restoreFromJson(e) {
     try {
       const data = JSON.parse(evt.target.result);
       if (data && (data.cars || data.fills)) {
-        if (confirm('Do you want to restore and replace all car data from this backup file?')) {
+        if (confirm('Do you want to restore and replace all vehicle data from this backup file?')) {
           if (data.cars) {
             S.cars = data.cars;
             if (data.activeCarId) S.activeCarId = data.activeCarId;
@@ -1045,7 +1052,7 @@ const syncHash = () => hashStr(JSON.stringify(syncPayload()));
 function countsOf(p) {
   const cars = (p && p.cars) || []; let f = 0, last = '';
   cars.forEach(c => (c.fills || []).forEach(x => { f++; if (x.d > last) last = x.d; }));
-  return cars.length + ' car(s), ' + f + ' fill-up(s)' + (last ? ', last fill ' + last : '');
+  return cars.length + ' vehicle(s), ' + f + ' fill-up(s)' + (last ? ', last fill ' + last : '');
 }
 function syncRerender() { if (!sheet.open && (tab === 'data' || !getActiveCar())) render(); }
 function syncMsg(m) { Sync.msg = m; syncRerender(); }
@@ -1166,7 +1173,7 @@ async function syncNow(interactive) {
     } else if (localChanged) {
       if (!S.cars.length) {                      // never silently wipe the cloud copy
         const remote = await driveRead(f.id, tok);
-        if (remote && remote.cars && remote.cars.length && !confirm('There is no car on this device. Also empty the Google Drive copy?\n\nOK = Empty the Drive copy\nCancel = Restore the data from Drive')) await pullDown(remote);
+        if (remote && remote.cars && remote.cars.length && !confirm('There is no vehicle on this device. Also empty the Google Drive copy?\n\nOK = Empty the Drive copy\nCancel = Restore the data from Drive')) await pullDown(remote);
         else await pushUp();
       } else await pushUp();
     } else done = { hash: st.hash, remoteMT: st.remoteMT };
@@ -1241,7 +1248,7 @@ function shiftMonths(dstr, n) {
 
 function openPdfRangeModal() {
   const car = getActiveCar();
-  if (!car) { toast('Add a car first.'); return; }
+  if (!car) { toast('Add a vehicle first.'); return; }
   const to = today();
   const from = shiftMonths(to, -3);
   openSheet('pdf-range', '', 'Select Report Duration', `
@@ -1334,7 +1341,7 @@ function exportPdfReport(fromDate, toDate) {
   const reportHtml = `
     <div class="p-head">
       <div>
-        <h1>Car Maintenance & Fuel Report</h1>
+        <h1>Vehicle Maintenance & Fuel Report</h1>
         <p style="margin-top:4px"><b>Vehicle:</b> ${esc(car.name)} ${car.plate ? '(' + esc(car.plate) + ')' : ''}</p>
       </div>
       <div style="text-align:right">
@@ -1425,7 +1432,7 @@ function exportPdfReport(fromDate, toDate) {
 /* ---------- 5. CLEAR / RESET DATA MODAL ---------- */
 function openResetModal() {
   const car = getActiveCar();
-  if (!car) { toast('Add a car first.'); return; }
+  if (!car) { toast('Add a vehicle first.'); return; }
   openSheet('reset-data', '', 'Reset & Clear Data Hub', `
     <div class="info-box" style="border-color:var(--late);background:color-mix(in srgb,var(--late) 10%,var(--surface));margin-bottom:14px">
       <b>Warning:</b> Reset actions cannot be undone. Please download a backup if you wish to preserve your existing records.
@@ -1438,27 +1445,27 @@ function openResetModal() {
     <h2 style="font-size:15px;margin-bottom:10px">Choose an Action:</h2>
     <div style="display:flex;flex-direction:column;gap:12px">
       
-      <!-- Option 1: Reset Active Car Records -->
+      <!-- Option 1: Reset Active Vehicle Records -->
       <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface-2)">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-          <b style="font-size:14px">1. Reset Active Car Records</b>
+          <b style="font-size:14px">1. Reset Active Vehicle Records</b>
           <span style="font-size:12px;color:var(--ink-2)">(${esc(car.name)})</span>
         </div>
-        <p class="small muted" style="margin-bottom:10px">Clears all fuel fills and payment history for <b>${esc(car.name)}</b>. Resets service intervals from current odometer. Keeps car profile intact.</p>
-        <button class="btn small danger" data-act="reset-active-car">Reset Active Car</button>
+        <p class="small muted" style="margin-bottom:10px">Clears all fuel fills and payment history for <b>${esc(car.name)}</b>. Resets service intervals from current odometer. Keeps the vehicle profile intact.</p>
+        <button class="btn small danger" data-act="reset-active-car">Reset Active Vehicle</button>
       </div>
 
-      <!-- Option 2: Add Fresh New Car -->
+      <!-- Option 2: Add Fresh New Vehicle -->
       <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface-2)">
-        <b style="font-size:14px;display:block;margin-bottom:4px">2. Start New Car (Keep Existing Data)</b>
-        <p class="small muted" style="margin-bottom:10px">Create a brand new car profile with blank records, without deleting your current cars or history.</p>
-        <button class="btn small ghost" data-act="add-car-prompt">➕ Add New Car Record</button>
+        <b style="font-size:14px;display:block;margin-bottom:4px">2. Start New Vehicle (Keep Existing Data)</b>
+        <p class="small muted" style="margin-bottom:10px">Create a brand new vehicle profile with blank records, without deleting your current vehicles or history.</p>
+        <button class="btn small ghost" data-act="add-car-prompt">➕ Add New Vehicle Record</button>
       </div>
 
       <!-- Option 3: Factory Reset All -->
       <div style="padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface-2)">
         <b style="font-size:14px;display:block;margin-bottom:4px;color:var(--late)">3. Factory Reset Everything</b>
-        <p class="small muted" style="margin-bottom:10px">Completely wipes ALL cars, fills, services, payments, and settings from this browser. Starts completely fresh.</p>
+        <p class="small muted" style="margin-bottom:10px">Completely wipes ALL vehicles, fills, services, payments, and settings from this browser. Starts completely fresh.</p>
         <button class="btn small danger" data-act="factory-reset">Factory Reset All</button>
       </div>
 
@@ -1492,7 +1499,36 @@ function confirmTap(el, label, fn) {
 
 const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
 
-/* ---------- MULTI-CAR: CAR SELECTION (Settings tab) ---------- */
+/* ---------- VEHICLE TYPES (icon + label). Stored on the vehicle as vt (and vn for a custom name). ---------- */
+const VT_TYPES = [
+  { id: 'bike', n: 'Bike' }, { id: 'car', n: 'Car' }, { id: 'suv', n: 'SUV' },
+  { id: 'truck', n: 'Truck' }, { id: 'taxi', n: 'Taxi' }, { id: 'custom', n: 'Custom' }
+];
+const VT_PATHS = {
+  bike: '<circle cx="5.5" cy="16.5" r="3.2"/><circle cx="18.5" cy="16.5" r="3.2"/><path d="M5.5 16.5l2.6-5.6h4.4l1.8 2.4h-3.8"/><path d="M12.5 10.9l1.6-2.6M13.6 8.3h3.2"/><path d="M15.6 8.5l2.9 8"/><path d="M8.1 10.9h-3"/><path d="M9 16.5h4"/>',
+  car: '<path d="M3 16v-3.2c0-.8.5-1.5 1.2-1.7l2.4-.8 1.6-2.6c.3-.5.9-.8 1.5-.8h5.6c.6 0 1.1.3 1.4.7l2 2.6 1.9.6c.8.3 1.4 1 1.4 1.9V16"/><path d="M3 16h2.2M9.8 16h4.4M18.8 16H21"/><circle cx="7.5" cy="16.2" r="2.3"/><circle cx="16.5" cy="16.2" r="2.3"/><path d="M8.2 10.8h7.6"/>',
+  suv: '<path d="M2.8 16.5v-4.7c0-.7.4-1.4 1-1.7L5.3 7.7c.3-.6.9-1 1.6-1h9.8c.7 0 1.3.4 1.6 1l1.5 2.4c.6.3 1 1 1 1.7v4.7"/><path d="M2.8 16.5h2.5M10.2 16.5h3.6M18.7 16.5h2.5"/><circle cx="7.7" cy="16.7" r="2.4"/><circle cx="16.3" cy="16.7" r="2.4"/><path d="M5 10.3h14M12 6.7v3.6"/>',
+  truck: '<path d="M2.5 15.5V7.2c0-.6.4-1 1-1h9.3c.6 0 1 .4 1 1v8.3"/><path d="M13.8 9.5h3.6l3.1 3.3v2.7"/><path d="M2.5 15.5h2.6M9.9 15.5h3.9M18.9 15.5h1.6"/><circle cx="7.5" cy="16.7" r="2.3"/><circle cx="16.5" cy="16.7" r="2.3"/>',
+  taxi: '<path d="M3 16v-3.2c0-.8.5-1.5 1.2-1.7l2.4-.8 1.6-2.6c.3-.5.9-.8 1.5-.8h5.6c.6 0 1.1.3 1.4.7l2 2.6 1.9.6c.8.3 1.4 1 1.4 1.9V16"/><path d="M3 16h2.2M9.8 16h4.4M18.8 16H21"/><circle cx="7.5" cy="16.2" r="2.3"/><circle cx="16.5" cy="16.2" r="2.3"/><path d="M10 4.2h4v2.2h-4zM8.2 10.8h7.6"/>',
+  custom: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 7.5l3 3"/><path d="M4 20l1-4 3 3z"/>'
+};
+function vtIcon(id) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (VT_PATHS[id] || VT_PATHS.car) + '</svg>';
+}
+function vtLabel(c) {
+  const id = (c && c.vt) || 'car';
+  if (id === 'custom') return (c.vn || 'Custom');
+  const t = VT_TYPES.find(x => x.id === id);
+  return t ? t.n : 'Car';
+}
+function vtPickerHTML(p, cur, customName) {       // p = id prefix of the sheet ('c' for add, 'ec' for edit)
+  return `<div class="field"><label>Vehicle Type</label>
+    <div class="vt-grid" role="group" aria-label="Vehicle type">${VT_TYPES.map(t => `<button type="button" class="vt" data-act="vt-pick" data-p="${p}" data-t="${t.id}" aria-pressed="${t.id === cur}">${vtIcon(t.id)}<span>${t.n}</span></button>`).join('')}</div>
+    <input type="hidden" id="${p}-vt" value="${esc(cur)}">
+    <div id="${p}-vn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}><input id="${p}-vn" type="text" maxlength="20" placeholder="Type name, e.g. Van, Bus, Tractor" value="${esc(customName || '')}" autocomplete="off"></div></div>`;
+}
+
+/* ---------- MULTI-VEHICLE: VEHICLE SELECTION (Settings tab) ---------- */
 function carSelectionSection() {
   const list = S.cars.map(c => {
     const isActive = c.id === S.activeCarId;
@@ -1501,8 +1537,8 @@ function carSelectionSection() {
     return `
       <div class="car-card ${isActive ? 'active' : ''}">
         <div class="car-card-body" data-act="switch-car" data-id="${esc(c.id)}">
-          <b>${esc(c.name)} ${isActive ? '<span class="badge-active">ACTIVE</span>' : ''}</b>
-          <span>${esc(c.plate || 'No Plate')} &middot; ${fmt0(curKm)} km &middot; Pending: AED ${fmt2(bal)}</span>
+          <b><i class="vt-ic">${vtIcon(c.vt || 'car')}</i>${esc(c.name)} ${isActive ? '<span class="badge-active">ACTIVE</span>' : ''}</b>
+          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${fmt0(curKm)} km &middot; Pending: AED ${fmt2(bal)}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;margin-left:8px">
           <button class="btn small ghost" data-act="edit-car" data-id="${esc(c.id)}">Edit</button>
@@ -1514,21 +1550,22 @@ function carSelectionSection() {
 
   return `
     <section class="sec" id="car-selection-sec">
-      <h2>Car Selection</h2>
+      <h2>Vehicle Selection</h2>
       <div class="panel pad" style="margin-top:10px">
         <div style="margin-bottom:14px">${list}</div>
-        <button class="btn" style="width:100%" data-act="add-car-prompt">${PLUS} Add New Car</button>
+        <button class="btn" style="width:100%" data-act="add-car-prompt">${PLUS} Add New Vehicle</button>
       </div>
     </section>
   `;
 }
 
 function addCarSheet() {
-  openSheet('add-car', '', 'Add New Car', `
-    <div class="field"><label for="c-name">Car Name / Model</label><input id="c-name" type="text" placeholder="e.g. Honda Civic, Nissan Patrol" autocomplete="off"></div>
+  openSheet('add-car', '', 'Add New Vehicle', `
+    ${vtPickerHTML('c', 'car', '')}
+    <div class="field"><label for="c-name">Vehicle Name / Model</label><input id="c-name" type="text" placeholder="e.g. Honda Civic, Yamaha R15, Nissan Patrol" autocomplete="off"></div>
     <div class="field"><label for="c-plate">Number Plate / Reg No (optional)</label><input id="c-plate" type="text" placeholder="e.g. DXB-12345" autocomplete="off"></div>
     <div class="field"><label for="c-km">Current Odometer (km)</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. 150000" autocomplete="off"></div>
-    <div class="actions"><button class="btn" data-act="save-new-car">Add Car</button></div>
+    <div class="actions"><button class="btn" data-act="save-new-car">Add Vehicle</button></div>
   `);
   $('#c-name', sheet).focus();
 }
@@ -1537,12 +1574,15 @@ function saveNewCar() {
   const name = $('#c-name', sheet).value.trim();
   const plate = $('#c-plate', sheet).value.trim();
   const km = parseNum($('#c-km', sheet).value) || 0;
-  if (!name) { toast('Car name is required.'); return; }
+  const vt = $('#c-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#c-vn', sheet).value.trim().slice(0, 20) : '';
+  if (!name) { toast('Vehicle name is required.'); return; }
 
   const newCar = {
     id: 'car_' + uid(),
     name,
     plate,
+    vt,
+    vn,
     odometer: km,
     fills: [],
     payments: [],
@@ -1563,12 +1603,13 @@ function editCarSheet(id) {
   const c = S.cars.find(x => x.id === id);
   if (!c) return;
   openSheet('edit-car', id, 'Edit ' + c.name, `
-    <div class="field"><label for="ec-name">Car Name / Model</label><input id="ec-name" type="text" value="${esc(c.name)}"></div>
+    ${vtPickerHTML('ec', c.vt || 'car', c.vn)}
+    <div class="field"><label for="ec-name">Vehicle Name / Model</label><input id="ec-name" type="text" value="${esc(c.name)}"></div>
     <div class="field"><label for="ec-plate">Number Plate / Reg No</label><input id="ec-plate" type="text" value="${esc(c.plate || '')}"></div>
     <div class="field"><label for="ec-km">Current Odometer (km)</label><input id="ec-km" type="text" inputmode="numeric" value="${c.odometer || ''}"></div>
     <div class="actions">
       <button class="btn" data-act="save-edit-car">Save Changes</button>
-      ${S.cars.length > 1 ? `<button class="btn danger" data-act="del-car-from-edit" data-id="${esc(c.id)}">Delete Car</button>` : ''}
+      ${S.cars.length > 1 ? `<button class="btn danger" data-act="del-car-from-edit" data-id="${esc(c.id)}">Delete Vehicle</button>` : ''}
     </div>
   `);
 }
@@ -1578,17 +1619,20 @@ function saveEditCar() {
   const name = $('#ec-name', sheet).value.trim();
   const plate = $('#ec-plate', sheet).value.trim();
   const km = parseNum($('#ec-km', sheet).value);
-  if (!name) { toast('Car name cannot be empty.'); return; }
+  const vt = $('#ec-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#ec-vn', sheet).value.trim().slice(0, 20) : '';
+  if (!name) { toast('Vehicle name cannot be empty.'); return; }
   const c = S.cars.find(x => x.id === id);
   if (c) {
     c.name = name;
     c.plate = plate;
+    c.vt = vt;
+    c.vn = vn;
     if (km != null && km >= 0) c.odometer = Math.round(km);
   }
   persistAll();
   closeSheet();
   render();
-  toast('Car details updated successfully.');
+  toast('Vehicle details updated successfully.');
 }
 
 /* ---------- VIEWS ---------- */
@@ -1866,7 +1910,7 @@ function viewHome() {
     </section>
   `;
 
-  h += `<p class="foot-note">Active Car: <b>${esc(car.name)}</b> &middot; Saved securely in browser storage.</p>`;
+  h += `<p class="foot-note">Active Vehicle: <b>${esc(car.name)}</b> &middot; Saved securely in browser storage.</p>`;
   return h;
 }
 
@@ -1936,7 +1980,7 @@ function viewData() {
   h += payersSection();
   h += themeSection();
   h += backupSection();
-  h += `<p class="foot-note">Active Car: <b>${esc(C.car.name)}</b> &middot; Saved securely in browser storage.</p>`;
+  h += `<p class="foot-note">Active Vehicle: <b>${esc(C.car.name)}</b> &middot; Saved securely in browser storage.</p>`;
   return h;
 }
 
@@ -1960,7 +2004,7 @@ function sparkline(vals, avg) {
 function fillRow(r) {
   const pcol = payerColor(r.b);
   const chip = `<span class="chip" style="color:${pcol};background:color-mix(in srgb,${pcol} 14%,var(--surface))">${esc(payerName(r.b))}</span>`;
-  const l2 = r.rental ? 'Rental car &middot; no odometer' : fmt0(r.k) + ' km' + (r.run != null && r.run > 0 ? ' &middot; +' + fmt0(r.run) + ' km' : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
+  const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : fmt0(r.k) + ' km' + (r.run != null && r.run > 0 ? ' &middot; +' + fmt0(r.run) + ' km' : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
   const rt = r.rental ? '' : (r.avg != null ? fmt2(r.avg) + ' km/L' : '&ndash;');
   return `
     <button class="row" data-act="edit-fill" data-id="${esc(r.i)}">
@@ -1973,7 +2017,7 @@ function fillRow(r) {
 function viewFuel() {
   const c = C; let h = '<h1 class="page-title" style="margin-bottom:12px">Fuel Log</h1>';
   if (!c.D.length) {
-    return h + `<div class="panel empty">No fill-ups recorded for this car yet.<br><button class="btn" data-act="add-fill">${PLUS} Add First Fill-up</button></div>`;
+    return h + `<div class="panel empty">No fill-ups recorded for this vehicle yet.<br><button class="btn" data-act="add-fill">${PLUS} Add First Fill-up</button></div>`;
   }
   h += `
     <div class="stats">
@@ -2081,7 +2125,7 @@ function viewService() {
   const car = getActiveCar();
   let h = '<h1 class="page-title" style="margin-bottom:12px">Maintenance & Service</h1>';
   if (!car.service || !car.service.length) {
-    h += '<div class="panel empty">No services for this car yet.</div>';
+    h += '<div class="panel empty">No services for this vehicle yet.</div>';
   } else {
     h += `<div class="panel">${car.service.map(it => svcRow(it, true)).join('')}</div>`;
   }
@@ -2119,12 +2163,12 @@ function viewNoCar() {
   return `
     <section class="panel empty" style="margin-top:10px;padding:34px 16px">
       <div style="width:96px;height:96px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--company) 14%,transparent)">${CAR_LOGO}</div>
-      <h2 style="margin-bottom:8px">No car added yet</h2>
-      <p class="muted">Add your car for history</p>
+      <h2 style="margin-bottom:8px">No vehicle added yet</h2>
+      <p class="muted">Add your vehicle for history</p>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:20px">
         ${third}
         <button class="btn ghost" data-act="upload-json" style="${bs}">Restore Backup</button>
-        <button class="btn ghost" data-act="add-car-prompt" style="${bs}">${PLUS} Add New Car</button>
+        <button class="btn ghost" data-act="add-car-prompt" style="${bs}">${PLUS} Add New Vehicle</button>
         ${cid && Sync.msg ? `<p class="small" style="margin-top:4px;color:var(--late)">${esc(Sync.msg)}</p>` : ''}
       </div>
     </section>
@@ -2138,7 +2182,8 @@ function render() {
   const car = getActiveCar();
   if (!car) {
     C = null;
-    $('#active-car-name').textContent = 'Select Car';
+    $('#active-car-name').textContent = 'Select Vehicle';
+    $('#active-car-icon').innerHTML = vtIcon('car');
     $('#active-car-plate').textContent = '';
     v.innerHTML = viewNoCar();
     document.querySelectorAll('.tabs button').forEach(b => b.removeAttribute('aria-current'));
@@ -2149,6 +2194,7 @@ function render() {
 
   compute();
   $('#active-car-name').textContent = C.car.name;
+  $('#active-car-icon').innerHTML = vtIcon(C.car.vt || 'car');
   $('#active-car-plate').textContent = C.car.plate ? ('· ' + C.car.plate) : '';
   v.innerHTML = tab === 'home' ? viewHome() : tab === 'fuel' ? viewFuel() : tab === 'money' ? viewMoney() : tab === 'service' ? viewService() : viewData();
   document.querySelectorAll('.tabs button').forEach(b => {
@@ -2181,7 +2227,7 @@ function checkFill(f, id) {
   let err = null, kind = 'missing', text = '';
   if (f.a > 0 && f.r > 0) {
     text = (me.litres || 0).toFixed(1) + ' L';
-    if (f.rental) text += ' \u00b7 rental car';
+    if (f.rental) text += ' \u00b7 rental vehicle';
     else if (me.run > 0) { text += ' \u00b7 ' + fmt0(me.run) + ' km run' + (me.avg != null ? ' \u00b7 ' + fmt2(me.avg) + ' km/L' : ''); }
   }
   if (!f.rental && f.k > 0) {
@@ -2226,7 +2272,7 @@ function fillSheet(id) {
   const rental = !!ex && ex.k == null;
   openSheet('fill', id, ex ? 'Edit fill-up' : 'Add fill-up', `
     <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${esc(v.d)}"></div>
-    <label class="check"><input type="checkbox" id="f-rental" ${rental ? 'checked' : ''}> Rental car (No odometer)</label>
+    <label class="check"><input type="checkbox" id="f-rental" ${rental ? 'checked' : ''}> Rental vehicle (No odometer)</label>
     <div class="field" id="f-km-wrap"><label for="f-km">Odometer (km)</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + fmt0(lastRow.k) : ''}" value="${v.k == null ? '' : esc(v.k)}">${scanRow('odo', 'Scan odometer')}</div>
     <div class="two">
       <div class="field"><label for="f-amt">Amount (AED)</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
@@ -3190,8 +3236,15 @@ const H = {
       persistAll();
       closeSheet();
       render();
-      toast('Switched active car to: ' + getActiveCar().name);
+      toast('Switched active vehicle to: ' + getActiveCar().name);
     }
+  },
+  'vt-pick': el => {
+    const p = el.dataset.p, t = el.dataset.t;
+    sheet.querySelectorAll('.vt[data-p="' + p + '"]').forEach(b => b.setAttribute('aria-pressed', String(b === el)));
+    $('#' + p + '-vt', sheet).value = t;
+    const w = $('#' + p + '-vn-wrap', sheet);
+    if (w) { w.hidden = t !== 'custom'; if (t === 'custom') $('#' + p + '-vn', sheet).focus(); }
   },
   'add-car-prompt': () => addCarSheet(),
   'save-new-car': () => saveNewCar(),
@@ -3199,19 +3252,19 @@ const H = {
   'save-edit-car': () => saveEditCar(),
   'del-car': el => {
     const id = el.dataset.id;
-    if (S.cars.length <= 1) { toast('You must have at least one car.'); return; }
+    if (S.cars.length <= 1) { toast('You must have at least one vehicle.'); return; }
     const carToDelete = S.cars.find(x => x.id === id);
     confirmTap(el, 'Confirm Delete', () => {
       S.cars = S.cars.filter(x => x.id !== id);
       if (S.activeCarId === id) S.activeCarId = S.cars[0].id;
       persistAll();
       render();
-      toast(`${carToDelete ? carToDelete.name : 'Car'} deleted successfully.`);
+      toast(`${carToDelete ? carToDelete.name : 'Vehicle'} deleted successfully.`);
     });
   },
   'del-car-from-edit': el => {
     const id = el.dataset.id;
-    if (S.cars.length <= 1) { toast('You must have at least one car.'); return; }
+    if (S.cars.length <= 1) { toast('You must have at least one vehicle.'); return; }
     const carToDelete = S.cars.find(x => x.id === id);
     confirmTap(el, 'Confirm Delete', () => {
       S.cars = S.cars.filter(x => x.id !== id);
@@ -3219,7 +3272,7 @@ const H = {
       persistAll();
       closeSheet();
       render();
-      toast(`${carToDelete ? carToDelete.name : 'Car'} deleted successfully.`);
+      toast(`${carToDelete ? carToDelete.name : 'Vehicle'} deleted successfully.`);
     });
   },
 
@@ -3312,7 +3365,7 @@ const H = {
       persistAll();
       closeSheet();
       render();
-      toast(`Active car (${car.name}) records reset successfully.`);
+      toast(`Active vehicle (${car.name}) records reset successfully.`);
     });
   },
   'factory-reset': el => {
