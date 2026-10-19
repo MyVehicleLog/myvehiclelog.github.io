@@ -1,6 +1,6 @@
 {
-  "name": "MyVehicleLog",
-  "short_name": "MyVehicleLog",
+  "name": "Vehicle Log",
+  "short_name": "Vehicle Log",
   "description": "Fuel, payments and vehicle service log",
   "start_url": "./",
   "scope": "./",
