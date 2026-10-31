@@ -335,7 +335,7 @@ const r2 = n => Math.round(n * 100) / 100;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 /* ---------- DYNAMIC UNITS & CURRENCY ---------- */
 const CURRENCIES = {
-  AED: { symbol: '⃃', name: 'UAE Dirham' },
+  AED: { symbol: 'AED', name: 'UAE Dirham' },
   AFN: { symbol: '؋', name: 'Afghan Afghani' },
   ALL: { symbol: 'L', name: 'Albanian Lek' },
   AMD: { symbol: '֏', name: 'Armenian Dram' },
@@ -450,7 +450,7 @@ const CURRENCIES = {
   RSD: { symbol: 'дин', name: 'Serbian Dinar' },
   RUB: { symbol: '₽', name: 'Russian Ruble' },
   RWF: { symbol: 'FRw', name: 'Rwandan Franc' },
-  SAR: { symbol: '⃁', name: 'Saudi Riyal' },
+  SAR: { symbol: 'SAR', name: 'Saudi Riyal' },
   SBD: { symbol: '$', name: 'Solomon Islands Dollar' },
   SCR: { symbol: '₨', name: 'Seychellois Rupee' },
   SDG: { symbol: 'ج.س.', name: 'Sudanese Pound' },
@@ -2124,7 +2124,7 @@ function unitsSection() {
   const distance = (S.cfg && S.cfg.distance) || 'km';
   const volume = (S.cfg && S.cfg.volume) || 'L';
   const curObj = CURRENCIES[currency] || CURRENCIES.AED;
-  const list = Object.keys(CURRENCIES).map(k => `<option value="${k}" ${k === currency ? 'selected' : ''}>${k} - ${CURRENCIES[k].name} (${CURRENCIES[k].symbol})</option>`).join('');
+  const list = Object.keys(CURRENCIES).map(k => `<option value="${k} - ${CURRENCIES[k].name}"></option>`).join('');
   return `
     <section class="sec" id="units-sec">
       <h2>Units & Currency</h2>
@@ -2133,7 +2133,7 @@ function unitsSection() {
           <label for="set-currency">Currency (Type to search)</label>
           <input list="currency-list" id="set-currency" data-act="set-unit" data-type="currency" value="${currency} - ${curObj.name}" autocomplete="off" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
           <datalist id="currency-list">${list}</datalist>
-          <p class="small muted" style="margin-top:6px">Selected: <b>${currency}</b> (${curObj.symbol}) - ${curObj.name}</p>
+          <p class="small muted" style="margin-top:6px">Selected: <b>${currency}</b> - ${curObj.name}</p>
         </div>
         <div class="field" style="margin:0">
           <label for="set-distance">Distance Unit</label>
@@ -3376,13 +3376,17 @@ const H = {
   'set-unit': el => {
     const type = el.dataset.type, val = (el.value || '').trim();
     if (type === 'currency') {
-      // User typed something like "USD - US Dollar ($)" or just "USD"
-      let code = val.split('-')[0].trim().toUpperCase();
-      // If user typed a name instead of code, try to find matching code
+      // Accept a currency code, full label, or a partial currency name.
+      const query = val.toLowerCase().trim();
+      let code = query.toUpperCase();
       if (!CURRENCIES[code]) {
-        const found = Object.keys(CURRENCIES).find(k => 
-          CURRENCIES[k].name.toLowerCase().includes(val.toLowerCase()) || 
-          k.toLowerCase() === val.toLowerCase()
+        const labelCode = query.match(/^([a-z]{3})\s*[-–]/i);
+        if (labelCode && CURRENCIES[labelCode[1].toUpperCase()]) code = labelCode[1].toUpperCase();
+      }
+      if (!CURRENCIES[code]) {
+        const found = Object.keys(CURRENCIES).find(k =>
+          CURRENCIES[k].name.toLowerCase() === query ||
+          CURRENCIES[k].name.toLowerCase().includes(query)
         );
         if (found) code = found;
       }
@@ -3658,6 +3662,13 @@ const H = {
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
   if (b && H[b.dataset.act]) H[b.dataset.act](b, e);
+});
+
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el && el.matches && el.matches('[data-act="set-unit"]')) {
+    H['set-unit'](el, e);
+  }
 });
 
 $('#excel-file-input').addEventListener('change', importFromExcel);
