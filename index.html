@@ -294,7 +294,7 @@ dialog.crop-ov::backdrop{background:#05080c}
   <button data-act="tab" data-tab="money"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.3c-.6-.8-1.5-1.3-2.7-1.3-1.5 0-2.6.8-2.6 2 0 2.9 5.4 1.3 5.4 4.2 0 1.2-1.1 2-2.7 2-1.2 0-2.2-.5-2.8-1.4"/><path d="M12 6.4V8m0 8v1.6"/></svg>Money</button>
   <button data-act="tab" data-tab="service"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.3-5.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Service</button>
   <button data-act="tab" data-tab="data"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
-</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.10.10</span></div></nav>
+</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.10.31</span></div></nav>
 
 <dialog id="sheet" aria-label="Modal"></dialog>
 <div id="print-report"></div>
@@ -311,7 +311,7 @@ const S = {
   // First install starts completely empty. A car is created only when the user adds/imports/restores one.
   cars: [],
   activeCarId: null,
-  cfg: { currency: "AED", theme: "system", payers: [], companyName: "Company", activeCompany: "C" },
+  cfg: { currency: "AED", distance: "km", volume: "L", theme: "system", payers: [], companyName: "Company", activeCompany: "C" },
   meta: { lastBackup: null }
 };
 
@@ -333,6 +333,173 @@ const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0
 const today = () => ymd(new Date());
 const r2 = n => Math.round(n * 100) / 100;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+/* ---------- DYNAMIC UNITS & CURRENCY ---------- */
+const CURRENCIES = {
+  AED: { symbol: '⃃', name: 'UAE Dirham' },
+  AFN: { symbol: '؋', name: 'Afghan Afghani' },
+  ALL: { symbol: 'L', name: 'Albanian Lek' },
+  AMD: { symbol: '֏', name: 'Armenian Dram' },
+  ANG: { symbol: 'ƒ', name: 'Netherlands Antillean Guilder' },
+  AOA: { symbol: 'Kz', name: 'Angolan Kwanza' },
+  ARS: { symbol: '$', name: 'Argentine Peso' },
+  AUD: { symbol: 'A$', name: 'Australian Dollar' },
+  AWG: { symbol: 'ƒ', name: 'Aruban Florin' },
+  AZN: { symbol: '₼', name: 'Azerbaijani Manat' },
+  BAM: { symbol: 'KM', name: 'Bosnia-Herzegovina Convertible Mark' },
+  BBD: { symbol: '$', name: 'Barbadian Dollar' },
+  BDT: { symbol: '৳', name: 'Bangladeshi Taka' },
+  BGN: { symbol: 'лв', name: 'Bulgarian Lev' },
+  BHD: { symbol: '.د.ب', name: 'Bahraini Dinar' },
+  BIF: { symbol: 'FBu', name: 'Burundian Franc' },
+  BMD: { symbol: '$', name: 'Bermudan Dollar' },
+  BND: { symbol: '$', name: 'Brunei Dollar' },
+  BOB: { symbol: 'Bs.', name: 'Bolivian Boliviano' },
+  BRL: { symbol: 'R$', name: 'Brazilian Real' },
+  BSD: { symbol: '$', name: 'Bahamian Dollar' },
+  BTN: { symbol: 'Nu.', name: 'Bhutanese Ngultrum' },
+  BWP: { symbol: 'P', name: 'Botswanan Pula' },
+  BYN: { symbol: 'Br', name: 'Belarusian Ruble' },
+  BZD: { symbol: 'BZ$', name: 'Belize Dollar' },
+  CAD: { symbol: 'C$', name: 'Canadian Dollar' },
+  CDF: { symbol: 'FC', name: 'Congolese Franc' },
+  CHF: { symbol: 'Fr', name: 'Swiss Franc' },
+  CLP: { symbol: '$', name: 'Chilean Peso' },
+  CNY: { symbol: '¥', name: 'Chinese Yuan' },
+  COP: { symbol: '$', name: 'Colombian Peso' },
+  CRC: { symbol: '₡', name: 'Costa Rican Colón' },
+  CUP: { symbol: '$', name: 'Cuban Peso' },
+  CVE: { symbol: '$', name: 'Cape Verdean Escudo' },
+  CZK: { symbol: 'Kč', name: 'Czech Koruna' },
+  DJF: { symbol: 'Fdj', name: 'Djiboutian Franc' },
+  DKK: { symbol: 'kr', name: 'Danish Krone' },
+  DOP: { symbol: 'RD$', name: 'Dominican Peso' },
+  DZD: { symbol: 'د.ج', name: 'Algerian Dinar' },
+  EGP: { symbol: 'E£', name: 'Egyptian Pound' },
+  ERN: { symbol: 'Nfk', name: 'Eritrean Nakfa' },
+  ETB: { symbol: 'Br', name: 'Ethiopian Birr' },
+  EUR: { symbol: '€', name: 'Euro' },
+  FJD: { symbol: '$', name: 'Fijian Dollar' },
+  FKP: { symbol: '£', name: 'Falkland Islands Pound' },
+  GBP: { symbol: '£', name: 'British Pound' },
+  GEL: { symbol: '₾', name: 'Georgian Lari' },
+  GHS: { symbol: '₵', name: 'Ghanaian Cedi' },
+  GIP: { symbol: '£', name: 'Gibraltar Pound' },
+  GMD: { symbol: 'D', name: 'Gambian Dalasi' },
+  GNF: { symbol: 'FG', name: 'Guinean Franc' },
+  GTQ: { symbol: 'Q', name: 'Guatemalan Quetzal' },
+  GYD: { symbol: '$', name: 'Guyanaese Dollar' },
+  HKD: { symbol: 'HK$', name: 'Hong Kong Dollar' },
+  HNL: { symbol: 'L', name: 'Honduran Lempira' },
+  HRK: { symbol: 'kn', name: 'Croatian Kuna' },
+  HTG: { symbol: 'G', name: 'Haitian Gourde' },
+  HUF: { symbol: 'Ft', name: 'Hungarian Forint' },
+  IDR: { symbol: 'Rp', name: 'Indonesian Rupiah' },
+  ILS: { symbol: '₪', name: 'Israeli New Shekel' },
+  INR: { symbol: '₹', name: 'Indian Rupee' },
+  IQD: { symbol: 'ع.د', name: 'Iraqi Dinar' },
+  IRR: { symbol: '﷼', name: 'Iranian Rial' },
+  ISK: { symbol: 'kr', name: 'Icelandic Króna' },
+  JMD: { symbol: 'J$', name: 'Jamaican Dollar' },
+  JOD: { symbol: 'د.ا', name: 'Jordanian Dinar' },
+  JPY: { symbol: '¥', name: 'Japanese Yen' },
+  KES: { symbol: 'KSh', name: 'Kenyan Shilling' },
+  KGS: { symbol: 'лв', name: 'Kyrgystani Som' },
+  KHR: { symbol: '៛', name: 'Cambodian Riel' },
+  KMF: { symbol: 'CF', name: 'Comorian Franc' },
+  KPW: { symbol: '₩', name: 'North Korean Won' },
+  KRW: { symbol: '₩', name: 'South Korean Won' },
+  KWD: { symbol: 'د.ك', name: 'Kuwaiti Dinar' },
+  KYD: { symbol: '$', name: 'Cayman Islands Dollar' },
+  KZT: { symbol: '₸', name: 'Kazakhstani Tenge' },
+  LAK: { symbol: '₭', name: 'Laotian Kip' },
+  LBP: { symbol: 'ل.ل', name: 'Lebanese Pound' },
+  LKR: { symbol: '₨', name: 'Sri Lankan Rupee' },
+  LRD: { symbol: '$', name: 'Liberian Dollar' },
+  LSL: { symbol: 'L', name: 'Lesotho Loti' },
+  LYD: { symbol: 'ل.د', name: 'Libyan Dinar' },
+  MAD: { symbol: 'د.م.', name: 'Moroccan Dirham' },
+  MDL: { symbol: 'L', name: 'Moldovan Leu' },
+  MGA: { symbol: 'Ar', name: 'Malagasy Ariary' },
+  MKD: { symbol: 'ден', name: 'Macedonian Denar' },
+  MMK: { symbol: 'K', name: 'Myanmar Kyat' },
+  MNT: { symbol: '₮', name: 'Mongolian Tugrik' },
+  MOP: { symbol: 'MOP$', name: 'Macanese Pataca' },
+  MRU: { symbol: 'UM', name: 'Mauritanian Ouguiya' },
+  MUR: { symbol: '₨', name: 'Mauritian Rupee' },
+  MVR: { symbol: 'Rf', name: 'Maldivian Rufiyaa' },
+  MWK: { symbol: 'MK', name: 'Malawian Kwacha' },
+  MXN: { symbol: 'Mex$', name: 'Mexican Peso' },
+  MYR: { symbol: 'RM', name: 'Malaysian Ringgit' },
+  MZN: { symbol: 'MT', name: 'Mozambican Metical' },
+  NAD: { symbol: '$', name: 'Namibian Dollar' },
+  NGN: { symbol: '₦', name: 'Nigerian Naira' },
+  NIO: { symbol: 'C$', name: 'Nicaraguan Córdoba' },
+  NOK: { symbol: 'kr', name: 'Norwegian Krone' },
+  NPR: { symbol: '₨', name: 'Nepalese Rupee' },
+  NZD: { symbol: 'NZ$', name: 'New Zealand Dollar' },
+  OMR: { symbol: 'ر.ع.', name: 'Omani Rial' },
+  PAB: { symbol: 'B/.', name: 'Panamanian Balboa' },
+  PEN: { symbol: 'S/', name: 'Peruvian Sol' },
+  PGK: { symbol: 'K', name: 'Papua New Guinean Kina' },
+  PHP: { symbol: '₱', name: 'Philippine Peso' },
+  PKR: { symbol: '₨', name: 'Pakistani Rupee' },
+  PLN: { symbol: 'zł', name: 'Polish Zloty' },
+  PYG: { symbol: '₲', name: 'Paraguayan Guarani' },
+  QAR: { symbol: 'ر.ق', name: 'Qatari Rial' },
+  RON: { symbol: 'lei', name: 'Romanian Leu' },
+  RSD: { symbol: 'дин', name: 'Serbian Dinar' },
+  RUB: { symbol: '₽', name: 'Russian Ruble' },
+  RWF: { symbol: 'FRw', name: 'Rwandan Franc' },
+  SAR: { symbol: '⃁', name: 'Saudi Riyal' },
+  SBD: { symbol: '$', name: 'Solomon Islands Dollar' },
+  SCR: { symbol: '₨', name: 'Seychellois Rupee' },
+  SDG: { symbol: 'ج.س.', name: 'Sudanese Pound' },
+  SEK: { symbol: 'kr', name: 'Swedish Krona' },
+  SGD: { symbol: 'S$', name: 'Singapore Dollar' },
+  SHP: { symbol: '£', name: 'Saint Helena Pound' },
+  SLL: { symbol: 'Le', name: 'Sierra Leonean Leone' },
+  SOS: { symbol: 'Sh', name: 'Somali Shilling' },
+  SRD: { symbol: '$', name: 'Surinamese Dollar' },
+  SSP: { symbol: '£', name: 'South Sudanese Pound' },
+  STN: { symbol: 'Db', name: 'São Tomé and Príncipe Dobra' },
+  SVC: { symbol: '$', name: 'Salvadoran Colón' },
+  SYP: { symbol: '£', name: 'Syrian Pound' },
+  SZL: { symbol: 'E', name: 'Swazi Lilangeni' },
+  THB: { symbol: '฿', name: 'Thai Baht' },
+  TJS: { symbol: 'ЅМ', name: 'Tajikistani Somoni' },
+  TMT: { symbol: 'm', name: 'Turkmenistani Manat' },
+  TND: { symbol: 'د.ت', name: 'Tunisian Dinar' },
+  TOP: { symbol: 'T$', name: 'Tongan Paʻanga' },
+  TRY: { symbol: '₺', name: 'Turkish Lira' },
+  TTD: { symbol: 'TT$', name: 'Trinidad and Tobago Dollar' },
+  TWD: { symbol: 'NT$', name: 'New Taiwan Dollar' },
+  TZS: { symbol: 'TSh', name: 'Tanzanian Shilling' },
+  UAH: { symbol: '₴', name: 'Ukrainian Hryvnia' },
+  UGX: { symbol: 'USh', name: 'Ugandan Shilling' },
+  USD: { symbol: '$', name: 'US Dollar' },
+  UYU: { symbol: '$U', name: 'Uruguayan Peso' },
+  UZS: { symbol: 'лв', name: 'Uzbekistani Som' },
+  VES: { symbol: 'Bs', name: 'Venezuelan Bolívar' },
+  VND: { symbol: '₫', name: 'Vietnamese Dong' },
+  VUV: { symbol: 'VT', name: 'Vanuatu Vatu' },
+  WST: { symbol: 'WS$', name: 'Samoan Tala' },
+  XAF: { symbol: 'FCFA', name: 'Central African CFA Franc' },
+  XCD: { symbol: '$', name: 'East Caribbean Dollar' },
+  XOF: { symbol: 'CFA', name: 'West African CFA Franc' },
+  XPF: { symbol: '₣', name: 'CFP Franc' },
+  YER: { symbol: '﷼', name: 'Yemeni Rial' },
+  ZAR: { symbol: 'R', name: 'South African Rand' },
+  ZMW: { symbol: 'ZK', name: 'Zambian Kwacha' },
+  ZWL: { symbol: '$', name: 'Zimbabwean Dollar' }
+};
+const getCurSym = () => (CURRENCIES[S.cfg && S.cfg.currency] || CURRENCIES.AED).symbol;
+const fmtCur = n => getCurSym() + ' ' + fmt2(n);
+const getDistUnit = () => (S.cfg && S.cfg.distance) === 'mi' ? 'mi' : 'km';
+const getVolUnit = () => (S.cfg && S.cfg.volume) === 'gal' ? 'gal' : 'L';
+const dispDist = km => km == null ? 0 : (getDistUnit() === 'mi' ? km * 0.621371 : km);
+const toKm = val => val == null ? 0 : (getDistUnit() === 'mi' ? val / 0.621371 : val);
+const dispVol = l => l == null ? 0 : (getVolUnit() === 'gal' ? l * 0.264172 : l);
+const toLit = val => val == null ? 0 : (getVolUnit() === 'gal' ? val / 0.264172 : val);
 /* ---------- PAYERS (Company, Self + user-defined) ---------- */
 const coName = () => (S.cfg && S.cfg.companyName && String(S.cfg.companyName).trim()) || 'Company';
 const customPayers = () => (S.cfg && Array.isArray(S.cfg.payers)) ? S.cfg.payers : [];
@@ -558,7 +725,7 @@ function initApp() {
     }
   }
 
-  if (cfg) S.cfg = Object.assign({ currency: "AED", theme: "system", payers: [], companyName: "Company", activeCompany: "C" }, cfg);
+if (cfg) S.cfg = Object.assign({ currency: "AED", distance: "km", volume: "L", theme: "system", payers: [], companyName: "Company", activeCompany: "C" }, cfg);
   if (!Array.isArray(S.cfg.payers)) S.cfg.payers = [];
   if (!S.cfg.companyName || !String(S.cfg.companyName).trim()) S.cfg.companyName = "Company";
   if (meta) S.meta = meta;
@@ -707,7 +874,7 @@ function exportToExcel() {
 
   // Oil Change block
   dashRows.push(["", "🛢  OIL CHANGE"]);
-  dashRows.push(["", "Last Change on (km)", "", "", "Next Due on (km)", "", "", "📍 Current Odometer", "", "", "Done (km)", "", "", "🛢️ Oil Change Due In"]);
+  dashRows.push(["", `Last Change on (${getDistUnit()})`, "", "", `Next Due on (${getDistUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${getDistUnit()})`, "", "", "🛢️ Oil Change Due In"]);
   dashRows.push([
     "",
     lastOil.k, "", "",
@@ -720,7 +887,7 @@ function exportToExcel() {
 
   // Tyre Rotation block
   dashRows.push(["", "🛞  TYRE ROTATION"]);
-  dashRows.push(["", "Last Change on (km)", "", "", "Next Due on (km)", "", "", "📍 Current Odometer", "", "", "Done (km)", "", "", "🛞 Tyre Rotation Due In"]);
+  dashRows.push(["", `Last Change on (${getDistUnit()})`, "", "", `Next Due on (${getDistUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${getDistUnit()})`, "", "", "🛞 Tyre Rotation Due In"]);
   dashRows.push([
     "",
     lastTyre.k, "", "",
@@ -788,13 +955,15 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, dashWS, "VEHICLE MAINTENANCE DASHBOARD");
 
   /* --- Sheet 2: Fuel Log --- */
-  const fillsHeader = [["ID", "Date", "Odometer (km)", "Amount (AED)", "Rate/Litre", "Paid By (C/S)", "Litres", "Km Driven", "km/L Average"]];
+  const fillsHeader = [["ID", "Date", `Odometer (${getDistUnit()})`, `Amount (${getCurSym()})`, `Rate/${getVolUnit()}`, "Paid By (C/S)", `Volume (${getVolUnit()})`, `${getDistUnit()} Driven`, `${getDistUnit()}/${getVolUnit()} Average`]];
   const fillsData = (car.fills || []).map((f, i) => {
     const rowNum = i + 2;
+    const dispOdo = f.k != null ? dispDist(f.k) : '';
+    const dispVol = f.r > 0 ? f.a / f.r : 0; // Litres
     return [
       f.i,
       f.d,
-      f.k != null ? f.k : '',
+      f.k != null ? dispDist(f.k) : '',
       f.a,
       f.r,
       (f.b === 'C' || f.b === 'S') ? f.b : payerName(f.b),
@@ -807,13 +976,13 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, fillsWS, "Fuel Log");
 
   /* --- Sheet 3: Payments --- */
-  const payHeader = [["ID", "Date Received", "Amount (AED)", "Notes", "Company"]];
+  const payHeader = [["ID", "Date Received", `Amount (${getCurSym()})`, "Notes", "Company"]];
   const payData = (car.payments || []).map(p => [p.i, p.d, p.a, p.n || '', payerName(coOfPay(p))]);
   const payWS = XLSX.utils.aoa_to_sheet([...payHeader, ...payData]);
   XLSX.utils.book_append_sheet(wb, payWS, "Payments");
 
   /* --- Sheet 4: Service Log --- */
-  const svcHeader = [["Service ID", "Service Name", "Odometer (km)", "Interval (km)", "Type", "Date", "Every", "Unit"]];
+  const svcHeader = [["Service ID", "Service Name", `Odometer (${getDistUnit()})`, `Interval (${getDistUnit()})`, "Type", "Date", "Every", "Unit"]];
   const svcRows = [];
   (car.service || []).forEach(s => {
     (s.h || []).forEach(h => {
@@ -1308,14 +1477,14 @@ function exportPdfReport(fromDate, toDate) {
     }
     const sc = svcCalc(s);
     if (!sc) return;
-    const dueTxt = sc.left >= 0 ? `${fmt0(sc.left)} km left` : `Overdue by ${fmt0(-sc.left)} km`;
+    const dueTxt = sc.left >= 0 ? `${fmt0(dispDist(sc.left))} ${getDistUnit()} left` : `Overdue by ${fmt0(dispDist(-sc.left))} ${getDistUnit()}`;
     const stateTxt = { ok: 'On Track', soon: 'Due Soon', late: 'Overdue' }[sc.state];
     svcRows += `
       <tr>
         <td><b>${esc(s.n)}</b></td>
-        <td class="num">${fmt0(sc.last.k)} km</td>
-        <td class="num">${fmt0(sc.last.i)} km</td>
-        <td class="num">${fmt0(sc.next)} km</td>
+        <td class="num">${fmt0(dispDist(sc.last.k))} ${getDistUnit()}</td>
+<td class="num">${fmt0(dispDist(sc.last.i))} ${getDistUnit()}</td>
+<td class="num">${fmt0(dispDist(sc.next))} ${getDistUnit()}</td>
         <td>${stateTxt}</td>
         <td class="num">${dueTxt}</td>
       </tr>
@@ -1334,11 +1503,11 @@ function exportPdfReport(fromDate, toDate) {
     fillsRows += `
       <tr>
         <td>${fmtDate(f.d, true)}</td>
-        <td class="num">${f.rental ? 'Rental' : fmt0(f.k) + ' km'}</td>
-        <td class="num">AED ${fmt2(f.a)}</td>
+        <td class="num">${f.rental ? 'Rental' : fmt0(dispDist(f.k)) + ' ' + getDistUnit()}</td>
+        <td class="num">${fmtCur(f.a)}</td>
         <td class="num">${f.r ? fmt2(f.r) : '-'}</td>
         <td>${esc(payerName(f.b))}</td>
-        <td class="num">${f.avg != null ? fmt2(f.avg) + ' km/L' : '-'}</td>
+        <td class="num">${f.avg != null ? fmt2(f.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '-'}</td>
       </tr>
     `;
   });
@@ -1351,15 +1520,15 @@ function exportPdfReport(fromDate, toDate) {
       </div>
       <div style="text-align:right">
         <p><b>Report Period:</b> ${periodLabel}</p>
-        <p><b>Current Odometer:</b> ${fmt0(odo)} km</p>
+        <p><b>Current Odometer:</b> ${fmt0(dispDist(odo))} ${getDistUnit()}</p>
       </div>
     </div>
 
     <div class="p-grid">
-      <div class="p-card"><b>${periodAvgs.length ? fmt2(mean(periodAvgs)) + ' km/L' : 'N/A'}</b><span>Period Mileage</span></div>
-      <div class="p-card"><b>AED ${fmt2(periodAll)}</b><span>Period Fuel Spend</span></div>
-      <div class="p-card"><b>AED ${fmt2(periodReceived)}</b><span>Reimbursed (Period)</span></div>
-      <div class="p-card"><b>${fmt0(periodRun)} km</b><span>Driven (Period)</span></div>
+      <div class="p-card"><b>${periodAvgs.length ? fmt2(mean(periodAvgs)) + ' ' + getDistUnit() + '/' + getVolUnit() : 'N/A'}</b><span>Period Mileage</span></div>
+<div class="p-card"><b>${fmtCur(periodAll)}</b><span>Period Fuel Spend</span></div>
+<div class="p-card"><b>${fmtCur(periodReceived)}</b><span>Reimbursed (Period)</span></div>
+      <div class="p-card"><b>${fmt0(dispDist(periodRun))} ${getDistUnit()}</b><span>Driven (Period)</span></div>
     </div>
 
     <div class="p-sec">
@@ -1395,9 +1564,9 @@ function exportPdfReport(fromDate, toDate) {
     <div class="p-sec">
       <h2>Fuel Summary by Payer (Period)</h2>
       <table class="p-tbl" style="width: auto; min-width: 320px;">
-        ${payersFor(periodBy).map(p => `<tr><td><b>${esc(p.n)} Paid:</b></td><td class="num">AED ${fmt2(periodBy[p.id] || 0)}</td></tr>`).join('')}
-        ${periodCos.map(co => `<tr><td><b>Received from ${esc(co.n)}:</b></td><td class="num">AED ${fmt2(periodRecBy[co.id] || 0)}</td></tr>
-        <tr style="font-weight:700"><td>Net ${esc(co.n)} (Paid − Received):</td><td class="num">AED ${fmt2((periodBy[co.id] || 0) - (periodRecBy[co.id] || 0))}</td></tr>`).join('')}
+        ${payersFor(periodBy).map(p => `<tr><td><b>${esc(p.n)} Paid:</b></td><td class="num">${fmtCur(periodBy[p.id] || 0)}</td></tr>`).join('')}
+${periodCos.map(co => `<tr><td><b>Received from ${esc(co.n)}:</b></td><td class="num">${fmtCur(periodRecBy[co.id] || 0)}</td></tr>
+<tr style="font-weight:700"><td>Net ${esc(co.n)} (Paid − Received):</td><td class="num">${fmtCur((periodBy[co.id] || 0) - (periodRecBy[co.id] || 0))}</td></tr>`).join('')}
       </table>
     </div>
 
@@ -1409,9 +1578,9 @@ function exportPdfReport(fromDate, toDate) {
             <th>Date</th>
             <th class="num">Odometer</th>
             <th class="num">Amount</th>
-            <th class="num">Rate/L</th>
+            <th class="num">Rate/${getVolUnit()}</th>
             <th>Paid By</th>
-            <th class="num">Avg km/L</th>
+            <th class="num">Avg ${getDistUnit()}/${getVolUnit()}</th>
           </tr>
         </thead>
         <tbody>
@@ -1505,6 +1674,15 @@ function confirmTap(el, label, fn) {
 const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
 
 /* ---------- VEHICLE TYPES (icon + label). Stored on the vehicle as vt (and vn for a custom name). ---------- */
+const FUEL_TYPES = [
+  { id: 'petrol', n: 'Petrol' },
+  { id: 'diesel', n: 'Diesel' },
+  { id: 'ev', n: 'EV' },
+  { id: 'hybrid', n: 'Hybrid' },
+  { id: 'cng', n: 'CNG' },
+  { id: 'custom', n: 'Custom' }
+];
+
 const VT_TYPES = [
   { id: 'bike', n: 'Bike' }, { id: 'car', n: 'Car' }, { id: 'suv', n: 'SUV' },
   { id: 'truck', n: 'Truck' }, { id: 'taxi', n: 'Taxi' }, { id: 'custom', n: 'Custom' }
@@ -1532,6 +1710,16 @@ function vtPickerHTML(p, cur, customName) {       // p = id prefix of the sheet 
     <input type="hidden" id="${p}-vt" value="${esc(cur)}">
     <div id="${p}-vn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}><input id="${p}-vn" type="text" maxlength="20" placeholder="Type name, e.g. Van, Bus, Tractor" value="${esc(customName || '')}" autocomplete="off"></div></div>`;
 }
+function fuelPickerHTML(p, cur, customName) {
+  return `<div class="field"><label>Fuel Type</label>
+    <div class="seg2" role="group" aria-label="Fuel type">
+      ${FUEL_TYPES.map(t => `<label><input type="radio" name="${p}-fuel" value="${t.id}" ${t.id === cur ? 'checked' : ''}><span>${t.n}</span></label>`).join('')}
+    </div>
+    <div id="${p}-fn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}>
+      <input id="${p}-fn" type="text" maxlength="20" placeholder="e.g. LPG, CNG" value="${esc(customName || '')}" autocomplete="off">
+    </div>
+  </div>`;
+}
 
 /* ---------- MULTI-VEHICLE: VEHICLE SELECTION (Settings tab) ---------- */
 function carSelectionSection() {
@@ -1543,7 +1731,7 @@ function carSelectionSection() {
       <div class="car-card ${isActive ? 'active' : ''}">
         <div class="car-card-body" data-act="switch-car" data-id="${esc(c.id)}">
           <b><i class="vt-ic">${vtIcon(c.vt || 'car')}</i>${esc(c.name)} ${isActive ? '<span class="badge-active">ACTIVE</span>' : ''}</b>
-          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${fmt0(curKm)} km &middot; Pending: AED ${fmt2(bal)}</span>
+          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${fmt0(curKm)} ${getDistUnit()} &middot; Pending: ${fmtCur(bal)}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;margin-left:8px">
           <button class="btn small ghost" data-act="edit-car" data-id="${esc(c.id)}">Edit</button>
@@ -1567,9 +1755,10 @@ function carSelectionSection() {
 function addCarSheet() {
   openSheet('add-car', '', 'Add New Vehicle', `
     ${vtPickerHTML('c', 'car', '')}
+	    ${fuelPickerHTML('c', 'petrol', '')}
     <div class="field"><label for="c-name">Vehicle Name / Model</label><input id="c-name" type="text" placeholder="e.g. Honda Civic, Yamaha R15, Nissan Patrol" autocomplete="off"></div>
     <div class="field"><label for="c-plate">Number Plate / Reg No (optional)</label><input id="c-plate" type="text" placeholder="e.g. DXB-12345" autocomplete="off"></div>
-    <div class="field"><label for="c-km">Current Odometer (km)</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. 150000" autocomplete="off"></div>
+    <div class="field"><label for="c-km">Current Odometer (${getDistUnit()})</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. ${getDistUnit() === 'mi' ? '90000' : '150000'}" autocomplete="off"></div>
     <div class="actions"><button class="btn" data-act="save-new-car">Add Vehicle</button></div>
   `);
   $('#c-name', sheet).focus();
@@ -1580,6 +1769,9 @@ function saveNewCar() {
   const plate = $('#c-plate', sheet).value.trim();
   const km = parseNum($('#c-km', sheet).value) || 0;
   const vt = $('#c-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#c-vn', sheet).value.trim().slice(0, 20) : '';
+    const fRad = sheet.querySelector('input[name="c-fuel"]:checked');
+  const fuelType = fRad ? fRad.value : 'petrol';
+  const fuelCustom = fuelType === 'custom' ? $('#c-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name is required.'); return; }
 
   const newCar = {
@@ -1588,12 +1780,14 @@ function saveNewCar() {
     plate,
     vt,
     vn,
-    odometer: km,
+	    fuelType,
+    fuelCustom,
+    odometer: toKm(km),
     fills: [],
     payments: [],
     service: [
-      { i: 'oil', n: 'Oil change', h: [{ k: km, i: 5000 }] },
-      { i: 'tyre', n: 'Tyre rotation', h: [{ k: km, i: 10000 }] }
+      { i: 'oil', n: 'Oil change', h: [{ k: toKm(km), i: 5000 }] },
+      { i: 'tyre', n: 'Tyre rotation', h: [{ k: toKm(km), i: 10000 }] }
     ]
   };
   S.cars.push(newCar);
@@ -1609,9 +1803,10 @@ function editCarSheet(id) {
   if (!c) return;
   openSheet('edit-car', id, 'Edit ' + c.name, `
     ${vtPickerHTML('ec', c.vt || 'car', c.vn)}
+	    ${fuelPickerHTML('ec', c.fuelType || 'petrol', c.fuelCustom)}
     <div class="field"><label for="ec-name">Vehicle Name / Model</label><input id="ec-name" type="text" value="${esc(c.name)}"></div>
     <div class="field"><label for="ec-plate">Number Plate / Reg No</label><input id="ec-plate" type="text" value="${esc(c.plate || '')}"></div>
-    <div class="field"><label for="ec-km">Current Odometer (km)</label><input id="ec-km" type="text" inputmode="numeric" value="${c.odometer || ''}"></div>
+    <div class="field"><label for="ec-km">Current Odometer (${getDistUnit()})</label><input id="ec-km" type="text" inputmode="numeric" value="${dispDist(c.odometer) || ''}"></div>
     <div class="actions">
       <button class="btn" data-act="save-edit-car">Save Changes</button>
       ${S.cars.length > 1 ? `<button class="btn danger" data-act="del-car-from-edit" data-id="${esc(c.id)}">Delete Vehicle</button>` : ''}
@@ -1625,6 +1820,9 @@ function saveEditCar() {
   const plate = $('#ec-plate', sheet).value.trim();
   const km = parseNum($('#ec-km', sheet).value);
   const vt = $('#ec-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#ec-vn', sheet).value.trim().slice(0, 20) : '';
+    const fRad = sheet.querySelector('input[name="ec-fuel"]:checked');
+  const fuelType = fRad ? fRad.value : 'petrol';
+  const fuelCustom = fuelType === 'custom' ? $('#ec-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name cannot be empty.'); return; }
   const c = S.cars.find(x => x.id === id);
   if (c) {
@@ -1632,7 +1830,9 @@ function saveEditCar() {
     c.plate = plate;
     c.vt = vt;
     c.vn = vn;
-    if (km != null && km >= 0) c.odometer = Math.round(km);
+	    c.fuelType = fuelType;
+    c.fuelCustom = fuelCustom;
+    if (km != null && km >= 0) c.odometer = Math.round(toKm(km));
   }
   persistAll();
   closeSheet();
@@ -1651,7 +1851,7 @@ function odometerHTML(km, animate) {
     for (let d = 0; d < 10; d++) col += '<i>' + d + '</i>';
     h += `<span class="drum${gap}"><span class="strip${animate ? ' roll' : ''}" style="--d:${s[i]};--i:${i}">${col}</span></span>`;
   }
-  return `<div class="odo-digits" role="img" aria-label="Odometer ${fmt0(km || 0)} kilometres">${h}<span class="odo-unit">km</span></div>`;
+  return `<div class="odo-digits" role="img" aria-label="Odometer ${fmt0(km || 0)} ${getDistUnit()}">${h}<span class="odo-unit">${getDistUnit()}</span></div>`;
 }
 
 function entryRow(it, full) {
@@ -1731,7 +1931,7 @@ function svcRow(it, full) {
   if (svcIsDate(it)) return dateRow(it, full);
   const c = svcCalc(it);
   if (!c) return '';
-  const leftTxt = c.left >= 0 ? fmt0(c.left) + ' km left' : 'Overdue by ' + fmt0(-c.left) + ' km';
+    const leftTxt = c.left >= 0 ? fmt0(dispDist(c.left)) + ' ' + getDistUnit() + ' left' : 'Overdue by ' + fmt0(dispDist(-c.left)) + ' ' + getDistUnit();
   const stateTxt = { ok: 'On track', soon: 'Due soon', late: 'Overdue' }[c.state];
   let h = `
     <div class="svc">
@@ -1743,14 +1943,14 @@ function svcRow(it, full) {
         <span style="width:${Math.round(c.frac * 100)}%"></span>
       </div>
       <div class="svc-meta num">
-        <span>Next at ${fmt0(c.next)} km</span>
-        <span>Every ${fmt0(c.last.i)} km</span>
+        <span>Next at ${fmt0(dispDist(c.next))} ${getDistUnit()}</span>
+        <span>Every ${fmt0(dispDist(c.last.i))} ${getDistUnit()}</span>
       </div>
   `;
   if (full) {
     h += `
       <div class="svc-meta num" style="margin-top:4px">
-        <span>Last done at ${fmt0(c.last.k)} km</span>
+        <span>Last done at ${fmt0(dispDist(c.last.k))} ${getDistUnit()}</span>
         <span class="${c.state}">${stateTxt}</span>
       </div>
       <div class="svc-actions">
@@ -1762,9 +1962,9 @@ function svcRow(it, full) {
       const j = c.h.length - 1 - idx; let note = '';
       if (j > 0) {
         const due = c.h[j - 1].k + c.h[j - 1].i, diff = e.k - due;
-        note = diff > 0 ? fmt0(diff) + ' km late' : (diff < 0 ? fmt0(-diff) + ' km early' : 'on time');
+        note = diff > 0 ? fmt0(dispDist(diff)) + ' ' + getDistUnit() + ' late' : (diff < 0 ? fmt0(dispDist(-diff)) + ' ' + getDistUnit() + ' early' : 'on time');
       }
-      return `<div class="hrow num"><span>Done at ${fmt0(e.k)} km</span><span class="muted">${note}</span></div>`;
+      return `<div class="hrow num"><span>Done at ${fmt0(dispDist(e.k))} ${getDistUnit()}</span><span class="muted">${note}</span></div>`;
     }).join('');
     h += `<details class="hist"><summary>History (${c.h.length})</summary>${rows}</details>`;
   }
@@ -1843,8 +2043,8 @@ function prevCompaniesHTML(c) {
       ${prev.map(l => `
         <div class="prow">
           <i style="background:${payerColor(l.id)}"></i>
-          <span class="pn">${esc(l.n)}<span class="muted small num" style="display:block;font-weight:400">Fuel ${fmt2(l.fuel)} &minus; Received ${fmt2(l.rec)}</span></span>
-          <b class="num">AED ${fmt2(l.bal)}</b>
+          <span class="pn">${esc(l.n)}<span class="muted small num" style="display:block;font-weight:400">Fuel ${fmtCur(l.fuel)} &minus; Received ${fmtCur(l.rec)}</span></span>
+          <b class="num">${fmtCur(l.bal)}</b>
           <button class="btn small ghost" data-act="add-pay" data-co="${esc(l.id)}">Record payment</button>
         </div>`).join('')}
     </div>`;
@@ -1860,7 +2060,7 @@ function viewHome() {
         <span>${esc(car.plate || '')}</span>
       </div>
       ${odometerHTML(c.odo, animateOdo)}
-      <p class="odo-meta num">${lr ? 'Last fill ' + fmtDate(lr.d) + (lr.avg != null ? ' &middot; ' + fmt2(lr.avg) + ' km/L' : '') : 'No fill-ups yet'}</p>
+      <p class="odo-meta num">${lr ? 'Last fill ' + fmtDate(lr.d) + (lr.avg != null ? ' &middot; ' + fmt2(lr.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '') : 'No fill-ups yet'}</p>
       <button class="btn on-dark" data-act="add-fill">${PLUS} Add fill-up</button>
     </section>
   `;
@@ -1874,8 +2074,8 @@ function viewHome() {
     <section class="sec">
       <h2>Pending from ${esc(coN)}</h2>
       <div class="pending">
-        <div class="big num"><span class="cur">AED</span> ${fmt2(bal)}</div>
-        <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
+        <div class="big num"><span class="cur">${getCurSym()}</span> ${fmt2(bal)}</div>
+        <p class="muted small num">${esc(coN)} Fuel ${fmtCur(c.comp)} &minus; Received ${fmtCur(c.received)}</p>
         ${bal < 0 ? '<p class="small" style="margin-top:6px;color:var(--ok)">' + esc(coN) + ' has paid more than the billed fuel.</p>' : ''}
         <button class="btn" data-act="add-pay" data-co="${esc(coId)}">Record payment</button>
       </div>
@@ -1888,9 +2088,9 @@ function viewHome() {
       <h2>Fuel Average</h2>
       <div class="panel pad">
         <div class="avgline num">
-          <div><b>${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span class="muted small">km/L overall</span></div>
-          ${c.avg10 != null ? `<div class="sub"><b>${fmt2(c.avg10)}</b><span class="muted small">km/L, last 10 fills</span></div>` : ''}
-          ${c.avgLast != null ? `<div class="sub"><b>${fmt2(c.avgLast)}</b><span class="muted small">km/L, last fill</span></div>` : ''}
+<div><b>${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span class="muted small">${getDistUnit()}/${getVolUnit()} overall</span></div>
+${c.avg10 != null ? `<div class="sub"><b>${fmt2(c.avg10)}</b><span class="muted small">${getDistUnit()}/${getVolUnit()}, last 10 fills</span></div>` : ''}
+${c.avgLast != null ? `<div class="sub"><b>${fmt2(c.avgLast)}</b><span class="muted small">${getDistUnit()}/${getVolUnit()}, last fill</span></div>` : ''}
         </div>
       </div>
     </section>
@@ -1909,7 +2109,7 @@ function viewHome() {
           ${wp.map(x => `<span style="width:${(x.v / tot * 100)}%;background:${payerColor(x.id)}"></span>`).join('')}
         </div>
         <div class="legend num">
-          ${wp.map(x => `<i style="background:${payerColor(x.id)}"></i><span>${esc(x.n)} &middot; ${x.pct}%</span><span class="v">AED ${fmt2(x.v)}</span>`).join('')}
+          ${wp.map(x => `<i style="background:${payerColor(x.id)}"></i><span>${esc(x.n)} &middot; ${x.pct}%</span><span class="v">${fmtCur(x.v)}</span>`).join('')}
         </div>
       </div>
     </section>
@@ -1919,6 +2119,40 @@ function viewHome() {
   return h;
 }
 
+function unitsSection() {
+  const currency = (S.cfg && S.cfg.currency) || 'AED';
+  const distance = (S.cfg && S.cfg.distance) || 'km';
+  const volume = (S.cfg && S.cfg.volume) || 'L';
+  const curObj = CURRENCIES[currency] || CURRENCIES.AED;
+  const list = Object.keys(CURRENCIES).map(k => `<option value="${k}" ${k === currency ? 'selected' : ''}>${k} - ${CURRENCIES[k].name} (${CURRENCIES[k].symbol})</option>`).join('');
+  return `
+    <section class="sec" id="units-sec">
+      <h2>Units & Currency</h2>
+      <div class="panel pad" style="margin-top:10px;display:flex;flex-direction:column;gap:14px">
+        <div class="field" style="margin:0">
+          <label for="set-currency">Currency (Type to search)</label>
+          <input list="currency-list" id="set-currency" data-act="set-unit" data-type="currency" value="${currency} - ${curObj.name}" autocomplete="off" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+          <datalist id="currency-list">${list}</datalist>
+          <p class="small muted" style="margin-top:6px">Selected: <b>${currency}</b> (${curObj.symbol}) - ${curObj.name}</p>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="set-distance">Distance Unit</label>
+          <select id="set-distance" data-act="set-unit" data-type="distance" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+            <option value="km" ${distance === 'km' ? 'selected' : ''}>Kilometres (km)</option>
+            <option value="mi" ${distance === 'mi' ? 'selected' : ''}>Miles (mi)</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="set-volume">Fuel Volume Unit</label>
+          <select id="set-volume" data-act="set-unit" data-type="volume" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+            <option value="L" ${volume === 'L' ? 'selected' : ''}>Litres (L)</option>
+            <option value="gal" ${volume === 'gal' ? 'selected' : ''}>US Gallons (gal)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+  `;
+}
 function themeSection() {
   const theme = (S.cfg && S.cfg.theme) || 'system';
   return `
@@ -1983,6 +2217,7 @@ function payersSection() {
 function viewData() {
   let h = carSelectionSection();
   h += payersSection();
+  h += unitsSection();
   h += themeSection();
   h += backupSection();
   h += `<p class="foot-note">Active Vehicle: <b>${esc(C.car.name)}</b> &middot; Saved securely in browser storage.</p>`;
@@ -2009,8 +2244,8 @@ function sparkline(vals, avg) {
 function fillRow(r) {
   const pcol = payerColor(r.b);
   const chip = `<span class="chip" style="color:${pcol};background:color-mix(in srgb,${pcol} 14%,var(--surface))">${esc(payerName(r.b))}</span>`;
-  const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : fmt0(r.k) + ' km' + (r.run != null && r.run > 0 ? ' &middot; +' + fmt0(r.run) + ' km' : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
-  const rt = r.rental ? '' : (r.avg != null ? fmt2(r.avg) + ' km/L' : '&ndash;');
+  const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : fmt0(dispDist(r.k)) + ' ' + getDistUnit() + (r.run != null && r.run > 0 ? ' &middot; +' + fmt0(dispDist(r.run)) + ' ' + getDistUnit() : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
+  const rt = r.rental ? '' : (r.avg != null ? fmt2(r.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '&ndash;');
   return `
     <button class="row" data-act="edit-fill" data-id="${esc(r.i)}">
       <span class="r1"><b>${fmtDate(r.d, true)}</b>${chip}<span class="amt">${fmt2(r.a)}</span></span>
@@ -2026,14 +2261,14 @@ function viewFuel() {
   }
   h += `
     <div class="stats">
-      <div class="panel stat"><b class="num">${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span>km/L average</span></div>
-      <div class="panel stat"><b class="num">${fmt0(c.totalRun)}</b><span>km driven</span></div>
-      <div class="panel stat"><b class="num">${fmt0(c.total)}</b><span>AED on fuel</span></div>
+      <div class="panel stat"><b class="num">${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span>${getDistUnit()}/${getVolUnit()} average</span></div>
+<div class="panel stat"><b class="num">${fmt0(dispDist(c.totalRun))}</b><span>${getDistUnit()} driven</span></div>
+      <div class="panel stat"><b class="num">${fmtCur(c.total)}</b><span>on fuel</span></div>
     </div>
   `;
   const last = c.avgs.slice(-40);
   if (last.length > 1) {
-    h += `<section class="sec"><h2>km/L, last ${last.length} fill-ups</h2><div class="panel chartbox">${sparkline(last, c.avg)}</div></section>`;
+    h += `<section class="sec"><h2>${getDistUnit()}/${getVolUnit()}, last ${last.length} fill-ups</h2><div class="panel chartbox">${sparkline(last, c.avg)}</div></section>`;
   }
   h += `
     <div class="sec">
@@ -2053,11 +2288,11 @@ function viewFuel() {
     const order = allPayers().map(p => p.id).filter(id => by[id] > 0);
     Object.keys(by).forEach(id => { if (!order.includes(id) && by[id] > 0) order.push(id); });
     const payLine = filter === 'all' && order.length
-      ? `<div class="mh-pay num">${order.map(id => `<span><i style="background:${payerColor(id)}"></i>${esc(payerName(id))} AED ${fmt2(by[id])}</span>`).join('')}</div>` : '';
+      ? `<div class="mh-pay num">${order.map(id => `<span><i style="background:${payerColor(id)}"></i>${esc(payerName(id))} ${fmtCur(by[id])}</span>`).join('')}</div>` : '';
     h += `
       <div class="mh">
         <b>${monthLabel(cur, true)}</b>
-        <span class="num">AED ${fmt2(tot)} &middot; ${buf.length} fill${buf.length > 1 ? 's' : ''}</span>
+        <span class="num">${fmtCur(tot)} &middot; ${buf.length} fill${buf.length > 1 ? 's' : ''}</span>
         ${payLine}
       </div>
       <div class="list">${buf.map(fillRow).join('')}</div>
@@ -2079,8 +2314,8 @@ function viewMoney() {
   h += `
     <div class="pending">
       <p class="muted small">Pending from ${esc(coN)} (${esc(car.name)})</p>
-      <div class="big num"><span class="cur">AED</span> ${fmt2(c.balance)}</div>
-      <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
+      <div class="big num"><span class="cur">${getCurSym()}</span> ${fmt2(c.balance)}</div>
+      <p class="muted small num">${esc(coN)} Fuel ${fmtCur(c.comp)} &minus; Received ${fmtCur(c.received)}</p>
       <button class="btn" data-act="add-pay" data-co="${esc(c.coId)}">Record payment</button>
     </div>
     <div style="margin-top:6px">${prevCompaniesHTML(c)}</div>
@@ -2139,23 +2374,23 @@ function viewService() {
 }
 
 const CAR_LOGO = `
-<svg viewBox="0 0 96 96" width="68" height="68" aria-hidden="true">
+<svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
   <defs>
-    <linearGradient id="carBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" style="stop-color:var(--company)"/>
-      <stop offset="1" style="stop-color:var(--company);stop-opacity:.72"/>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F2230"/>
+      <stop offset="1" stop-color="#1B2E42"/>
     </linearGradient>
   </defs>
-  <ellipse cx="48" cy="75" rx="34" ry="3.2" fill="#000" opacity=".18"/>
-  <path d="M24 47 L32.5 32.5 Q34.3 30 37.4 30 H59 Q62.1 30 63.9 32.5 L72 47 Z" fill="url(#carBody)"/>
-  <path d="M30.5 45 L36.2 35 Q36.9 34 38.2 34 H46 V45 Z" fill="var(--surface)" opacity=".92"/>
-  <path d="M50 34 H58.4 Q59.8 34 60.6 35.1 L66.2 45 H50 Z" fill="var(--surface)" opacity=".92"/>
-  <rect x="11" y="45" width="74" height="18" rx="7" fill="url(#carBody)"/>
-  <rect x="17" y="49" width="62" height="2" rx="1" fill="#fff" opacity=".28"/>
-  <rect x="80" y="50" width="5" height="5" rx="2" fill="#F7C948"/>
-  <rect x="11" y="50" width="4" height="5" rx="2" fill="#E5484D"/>
-  <circle cx="31" cy="64" r="9" fill="var(--ink)"/><circle cx="31" cy="64" r="3.8" fill="var(--surface)"/>
-  <circle cx="65" cy="64" r="9" fill="var(--ink)"/><circle cx="65" cy="64" r="3.8" fill="var(--surface)"/>
+  <path d="M48 4 L88 16 V44 C88 70 72 86 48 92 C24 86 8 70 8 44 V16 Z" fill="#0F2230" stroke="#2C52C4" stroke-width="2"/>
+  <path d="M48 8 L84 19 V44 C84 68 70 82 48 88 C26 82 12 68 12 44 V19 Z" fill="url(#shieldGrad)"/>
+  <path d="M48 8 L84 19 V30 L48 19 L12 30 V19 Z" fill="#2C52C4" opacity="0.4"/>
+  <path d="M30 48 V32 C30 29 32 27 35 27 H42 C45 27 47 29 47 32 V48" stroke="#00C853" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="33" y="32" width="11" height="7" rx="1" fill="#00C853"/>
+  <path d="M32 62 L44 52 L52 56 L66 42" stroke="#FFC107" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 42 H66 V48" stroke="#FFC107" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="60" y="52" width="13" height="15" rx="2" stroke="#00C853" stroke-width="2" fill="none"/>
+  <path d="M63 60 L65 62 L69 57" stroke="#00C853" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="74" r="3" fill="#FFC107" opacity="0.6"/>
 </svg>`;
 
 function viewNoCar() {
@@ -2216,7 +2451,7 @@ function readFill() {
   return {
     d: $('#f-date', sheet).value,
     rental: $('#f-rental', sheet).checked,
-    k: parseNum($('#f-km', sheet).value),
+    k: toKm(parseNum($('#f-km', sheet).value)),
     a: parseNum($('#f-amt', sheet).value),
     r: parseNum($('#f-rate', sheet).value),
     b: by ? by.value : 'C'
@@ -2231,21 +2466,21 @@ function checkFill(f, id) {
   const idx = der.findIndex(x => x.i === key), me = der[idx];
   let err = null, kind = 'missing', text = '';
   if (f.a > 0 && f.r > 0) {
-    text = (me.litres || 0).toFixed(1) + ' L';
+        text = dispVol(me.litres || 0).toFixed(1) + ' ' + getVolUnit();
     if (f.rental) text += ' \u00b7 rental vehicle';
-    else if (me.run > 0) { text += ' \u00b7 ' + fmt0(me.run) + ' km run' + (me.avg != null ? ' \u00b7 ' + fmt2(me.avg) + ' km/L' : ''); }
+    else if (me.run > 0) { text += ' \u00b7 ' + fmt0(dispDist(me.run)) + ' ' + getDistUnit() + ' run' + (me.avg != null ? ' \u00b7 ' + fmt2(me.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : ''); }
   }
   if (!f.rental && f.k > 0) {
-    if (me.run != null && me.run <= 0) { err = 'Odometer must be higher than previous fill (' + fmt0(me.pk) + ' km).'; kind = 'order'; }
+    if (me.run != null && me.run <= 0) { err = 'Odometer must be higher than previous fill (' + fmt0(dispDist(me.pk)) + ' ' + getDistUnit() + ').'; kind = 'order'; }
     else {
       const nx = der.slice(idx + 1).find(x => !x.rental);
-      if (nx && nx.run != null && nx.run <= 0) { err = 'Odometer must be lower than next fill (' + fmt0(nx.k) + ' km).'; kind = 'order'; }
+      if (nx && nx.run != null && nx.run <= 0) { err = 'Odometer must be lower than next fill (' + fmt0(dispDist(nx.k)) + ' ' + getDistUnit() + ').'; kind = 'order'; }
     }
   }
   if (!err) {
     if (!f.d) err = 'Please choose a date.';
     else if (!(f.a > 0)) err = 'Please enter amount paid.';
-    else if (!(f.r > 0)) err = 'Please enter rate per litre.';
+    else if (!(f.r > 0)) err = 'Please enter rate per ' + (getVolUnit() === 'gal' ? 'gallon' : 'litre') + '.';
     else if (!f.rental && !(f.k > 0)) err = 'Please enter odometer reading.';
   }
   return { err, kind, text };
@@ -2275,13 +2510,14 @@ function fillSheet(id) {
   const lastRow = C && C.lastReal, anyRow = (car.fills || []).length ? sortFills(car.fills).slice(-1)[0] : null;
   const v = ex || { d: today(), k: null, a: null, r: anyRow ? anyRow.r : 2.57, b: activeCoId() };
   const rental = !!ex && ex.k == null;
+    const fuelLabel = (car.fuelType === 'ev') ? 'Rate/kWh' : `Rate/${getVolUnit()}`;
   openSheet('fill', id, ex ? 'Edit fill-up' : 'Add fill-up', `
     <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${esc(v.d)}"></div>
     <label class="check"><input type="checkbox" id="f-rental" ${rental ? 'checked' : ''}> Rental vehicle (No odometer)</label>
-    <div class="field" id="f-km-wrap"><label for="f-km">Odometer (km)</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + fmt0(lastRow.k) : ''}" value="${v.k == null ? '' : esc(v.k)}">${scanRow('odo', 'Scan odometer')}</div>
+    <div class="field" id="f-km-wrap"><label for="f-km">Odometer (${getDistUnit()})</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + fmt0(dispDist(lastRow.k)) : ''}" value="${v.k == null ? '' : esc(dispDist(v.k))}">${scanRow('odo', 'Scan odometer')}</div>
     <div class="two">
-      <div class="field"><label for="f-amt">Amount (AED)</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
-      <div class="field"><label for="f-rate">Rate/Litre</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(v.r)}"></div>
+      <div class="field"><label for="f-amt">Amount (${getCurSym()})</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
+      <div class="field"><label for="f-rate">${fuelLabel}</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(v.r)}"></div>
     </div>
     <div style="margin:-6px 0 14px">${scanRow('bill', 'Scan bill')}</div>
     <fieldset class="field"><legend>Paid by</legend>
@@ -2925,7 +3161,7 @@ function paySheet(id, coPref) {
   openSheet('pay', id, ex ? 'Edit payment' : 'Record payment', `
     ${coField}
     <div class="field"><label for="p-date">Date received</label><input id="p-date" type="date" value="${esc(v.d)}"></div>
-    <div class="field"><label for="p-amt">Amount (AED)</label><input id="p-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
+    <div class="field"><label for="p-amt">Amount (${getCurSym()})</label><input id="p-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
     <div class="field"><label for="p-note">Note / Ref (optional)</label><input id="p-note" type="text" maxlength="80" value="${esc(v.n || '')}"></div>
     <p id="p-msg" class="preview" aria-live="polite"></p>
     <div class="actions">
@@ -2976,8 +3212,8 @@ function svcDoneSheet(id) {
   if (svcIsEntry(it) || svcIsDate(it)) return entryDoneSheet(it);
   const c = svcCalc(it);
   openSheet('svc-done', id, it.n + ' Done', `
-    <div class="field"><label for="s-km">Odometer at service (km)</label><input id="s-km" type="text" inputmode="numeric" value="${C.odo == null ? '' : esc(C.odo)}"></div>
-    <div class="field"><label for="s-int">Next due after (km interval)</label><input id="s-int" type="text" inputmode="numeric" value="${esc(c ? c.last.i : 5000)}"></div>
+    <div class="field"><label for="s-km">Odometer at service (${getDistUnit()})</label><input id="s-km" type="text" inputmode="numeric" value="${C.odo == null ? '' : esc(dispDist(C.odo))}"></div>
+    <div class="field"><label for="s-int">Next due after (${getDistUnit()} interval)</label><input id="s-int" type="text" inputmode="numeric" value="${esc(c ? dispDist(c.last.i) : 5000)}"></div>
     <p id="s-msg" class="preview" aria-live="polite"></p>
     <div class="actions"><button class="btn" data-act="save-svc-done">Save</button></div>
   `);
@@ -2985,11 +3221,11 @@ function svcDoneSheet(id) {
 
 function saveSvcDone() {
   { const it0 = svcById(sheet.dataset.id); if (svcIsEntry(it0) || svcIsDate(it0)) return saveEntryDone(it0); }
-  const id = sheet.dataset.id, it = svcById(id), km = parseNum($('#s-km', sheet).value), iv = parseNum($('#s-int', sheet).value), msg = $('#s-msg', sheet);
+  const id = sheet.dataset.id, it = svcById(id), km = toKm(parseNum($('#s-km', sheet).value)), iv = toKm(parseNum($('#s-int', sheet).value)), msg = $('#s-msg', sheet);
   const c = svcCalc(it);
   if (!(km > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter odometer reading.'; return; }
-  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter service interval in km.'; return; }
-  if (c && km <= c.last.k) { msg.className = 'preview err'; msg.textContent = 'Odometer must be higher than last service (' + fmt0(c.last.k) + ' km).'; return; }
+  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter service interval in ' + getDistUnit() + '.'; return; }
+  if (c && km <= c.last.k) { msg.className = 'preview err'; msg.textContent = 'Odometer must be higher than last service (' + fmt0(dispDist(c.last.k)) + ' ' + getDistUnit() + ').'; return; }
   const car = getActiveCar();
   car.service = car.service.map(x => x.i === id ? Object.assign({}, x, { h: x.h.concat([{ k: Math.round(km), i: Math.round(iv) }]) }) : x);
   persistAll(); closeSheet(); render(); toast(it.n + ' marked as completed');
@@ -3036,7 +3272,7 @@ function svcEditSheet(id) {
   const c = svcCalc(it);
   openSheet('svc-edit', id, 'Edit ' + it.n, `
     <div class="field"><label for="e-name">Service Name</label><input id="e-name" type="text" maxlength="40" value="${esc(it.n)}"></div>
-    <div class="field"><label for="e-int">Interval for next service (km)</label><input id="e-int" type="text" inputmode="numeric" value="${esc(c ? c.last.i : 5000)}"></div>
+    <div class="field"><label for="e-int">Interval for next service (${getDistUnit()})</label><input id="e-int" type="text" inputmode="numeric" value="${esc(dispDist(c ? c.last.i : 5000))}"></div>
     <p id="e-msg" class="preview" aria-live="polite"></p>
     <div class="actions">
       <button class="btn" data-act="save-svc-edit">Save</button>
@@ -3048,9 +3284,9 @@ function svcEditSheet(id) {
 
 function saveSvcEdit() {
   { const it0 = svcById(sheet.dataset.id); if (svcIsEntry(it0) || svcIsDate(it0)) return saveEntryEdit(it0); }
-  const id = sheet.dataset.id, name = $('#e-name', sheet).value.trim(), iv = parseNum($('#e-int', sheet).value), msg = $('#e-msg', sheet);
+  const id = sheet.dataset.id, name = $('#e-name', sheet).value.trim(), iv = toKm(parseNum($('#e-int', sheet).value)), msg = $('#e-msg', sheet);
   if (!name) { msg.className = 'preview err'; msg.textContent = 'Please enter a name.'; return; }
-  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter the interval in km.'; return; }
+  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter the interval in ' + getDistUnit() + '.'; return; }
   const car = getActiveCar();
   car.service = car.service.map(x => {
     if (x.i !== id) return x;
@@ -3069,11 +3305,11 @@ function svcAddSheet() {
     <div class="field"><label for="a-name">Service Type</label><input id="a-name" type="text" maxlength="40" placeholder="e.g. Oil change, Plug change"></div>
     <div id="a-rbox">
       <div class="field"><label for="a-by">Remind by</label>
-        <select id="a-by"><option value="k">Kilometres (km)</option><option value="d">Date (days or months)</option></select></div>
-      <div class="two" id="a-km-box">
-        <div class="field"><label for="a-int">Every (km interval)</label><input id="a-int" type="text" inputmode="numeric" placeholder="e.g. 10000"></div>
-        <div class="field"><label for="a-km">Last done at (km)</label><input id="a-km" type="text" inputmode="numeric" value="${C && C.odo != null ? esc(C.odo) : ''}"></div>
-      </div>
+        <select id="a-by"><option value="k">${getDistUnit() === 'mi' ? 'Miles (mi)' : 'Kilometres (km)'}</option><option value="d">Date (days or months)</option></select></div>
+<div class="two" id="a-km-box">
+  <div class="field"><label for="a-int">Every (${getDistUnit()} interval)</label><input id="a-int" type="text" inputmode="numeric" placeholder="e.g. ${getDistUnit() === 'mi' ? '6000' : '10000'}"></div>
+  <div class="field"><label for="a-km">Last done at (${getDistUnit()})</label><input id="a-km" type="text" inputmode="numeric" value="${C && C.odo != null ? esc(dispDist(C.odo)) : ''}"></div>
+</div>
       <div id="a-date-box" hidden>
         <div class="two">
           <div class="field"><label for="a-ev">Every</label><input id="a-ev" type="text" inputmode="numeric" placeholder="e.g. 6"></div>
@@ -3123,8 +3359,8 @@ function saveSvcAdd() {
     car.service = (car.service || []).concat([{ i: 's' + uid(), n: name, t: 'd', v: ev, u: eu, h: [{ d: ld }] }]);
     persistAll(); closeSheet(); render(); toast('Service reminder added'); return;
   }
-  const iv = parseNum($('#a-int', sheet).value), km = parseNum($('#a-km', sheet).value);
-  if (!(iv > 0)) return bad('Please enter the interval in km.');
+  const iv = toKm(parseNum($('#a-int', sheet).value)), km = toKm(parseNum($('#a-km', sheet).value));
+  if (!(iv > 0)) return bad('Please enter the interval in ' + getDistUnit() + '.');
   if (!(km >= 0)) return bad('Please enter the odometer reading for last service.');
   car.service = (car.service || []).concat([{ i: 's' + uid(), n: name, h: [{ k: Math.round(km), i: Math.round(iv) }] }]);
   persistAll(); closeSheet(); render(); toast('Service reminder added');
@@ -3137,6 +3373,34 @@ const H = {
   'toggle-pay': () => { showAllPay = !showAllPay; render(); },
   'set-theme': el => setTheme(el.dataset.theme),
 
+  'set-unit': el => {
+    const type = el.dataset.type, val = (el.value || '').trim();
+    if (type === 'currency') {
+      // User typed something like "USD - US Dollar ($)" or just "USD"
+      let code = val.split('-')[0].trim().toUpperCase();
+      // If user typed a name instead of code, try to find matching code
+      if (!CURRENCIES[code]) {
+        const found = Object.keys(CURRENCIES).find(k => 
+          CURRENCIES[k].name.toLowerCase().includes(val.toLowerCase()) || 
+          k.toLowerCase() === val.toLowerCase()
+        );
+        if (found) code = found;
+      }
+      if (CURRENCIES[code]) {
+        S.cfg.currency = code;
+      } else {
+        toast('Currency not found: ' + val);
+        render();
+        return;
+      }
+    }
+    if (type === 'distance') S.cfg.distance = val;
+    if (type === 'volume') S.cfg.volume = val;
+    persistAll();
+    render();
+    toast('Units updated');
+  },
+  
   // Custom payers
   'payer-new-toggle': () => {
     const box = $('#f-payer-add', sheet); if (!box) return;
