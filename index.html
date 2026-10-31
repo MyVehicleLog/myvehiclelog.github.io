@@ -2124,15 +2124,14 @@ function unitsSection() {
   const distance = (S.cfg && S.cfg.distance) || 'km';
   const volume = (S.cfg && S.cfg.volume) || 'L';
   const curObj = CURRENCIES[currency] || CURRENCIES.AED;
-  const list = Object.keys(CURRENCIES).map(k => `<option value="${k} - ${CURRENCIES[k].name}"></option>`).join('');
   return `
     <section class="sec" id="units-sec">
       <h2>Units & Currency</h2>
       <div class="panel pad" style="margin-top:10px;display:flex;flex-direction:column;gap:14px">
-        <div class="field" style="margin:0">
+        <div class="field" style="margin:0;position:relative">
           <label for="set-currency">Currency (Type to search)</label>
-          <input list="currency-list" id="set-currency" data-act="set-unit" data-type="currency" value="${currency} - ${curObj.name}" autocomplete="off" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
-          <datalist id="currency-list">${list}</datalist>
+          <input type="text" id="set-currency" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="currency-options" value="${currency} - ${curObj.name}" autocomplete="off" spellcheck="false" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+          <div id="currency-options" role="listbox" hidden style="position:absolute;z-index:50;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #0003;margin-top:4px"></div>
           <p class="small muted" style="margin-top:6px">Selected: <b>${currency}</b> - ${curObj.name}</p>
         </div>
         <div class="field" style="margin:0">
@@ -3366,12 +3365,28 @@ function saveSvcAdd() {
   persistAll(); closeSheet(); render(); toast('Service reminder added');
 }
 
+/* ---------- CURRENCY SEARCH DROPDOWN ---------- */
+function updateCurrencyOptions(query) {
+  const box = $('#currency-options'), input = $('#set-currency');
+  if (!box || !input) return;
+  const q = String(query || '').trim().toLowerCase();
+  const matches = Object.keys(CURRENCIES).filter(code => !q || code.toLowerCase().includes(q) || CURRENCIES[code].name.toLowerCase().includes(q)).slice(0, 80);
+  box.innerHTML = matches.length ? matches.map(code => `<button type="button" role="option" data-act="currency-pick" data-code="${code}" style="display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;cursor:pointer"> <b>${code}</b> - ${esc(CURRENCIES[code].name)}</button>`).join('') : '<div class="small muted" style="padding:12px">No matching currency found</div>';
+  box.hidden = false;
+  input.setAttribute('aria-expanded', 'true');
+}
+
 /* ---------- EVENT DELEGATION ---------- */
 const H = {
   tab: el => { tab = el.dataset.tab; render(); window.scrollTo(0, 0); },
   filter: el => { filter = el.dataset.f; render(); },
   'toggle-pay': () => { showAllPay = !showAllPay; render(); },
   'set-theme': el => setTheme(el.dataset.theme),
+  'currency-pick': el => {
+    const code = el.dataset.code;
+    if (!CURRENCIES[code]) return;
+    S.cfg.currency = code; persistAll(); render(); toast('Currency updated');
+  },
 
   'set-unit': el => {
     const type = el.dataset.type, val = (el.value || '').trim();
@@ -3664,10 +3679,27 @@ document.addEventListener('click', e => {
   if (b && H[b.dataset.act]) H[b.dataset.act](b, e);
 });
 
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'set-currency') updateCurrencyOptions(e.target.value);
+});
+document.addEventListener('focusin', e => {
+  if (e.target && e.target.id === 'set-currency') updateCurrencyOptions('');
+});
+document.addEventListener('keydown', e => {
+  if (e.target && e.target.id === 'set-currency') {
+    if (e.key === 'Escape') { const box = $('#currency-options'); if (box) box.hidden = true; e.target.setAttribute('aria-expanded', 'false'); }
+    if (e.key === 'Enter') { e.preventDefault(); const first = $('#currency-options [data-code]'); if (first) H['currency-pick'](first); }
+  }
+});
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el && el.matches && el.matches('[data-act="set-unit"]')) {
-    H['set-unit'](el, e);
+  if (el && el.matches && el.matches('select[data-act="set-unit"]')) H['set-unit'](el, e);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('#set-currency, #currency-options')) {
+    const box = $('#currency-options'), input = $('#set-currency');
+    if (box) box.hidden = true;
+    if (input) input.setAttribute('aria-expanded', 'false');
   }
 });
 
