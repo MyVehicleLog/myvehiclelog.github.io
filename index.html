@@ -2136,14 +2136,14 @@ function unitsSection() {
         </div>
         <div class="field" style="margin:0">
           <label for="set-distance">Distance Unit</label>
-          <select id="set-distance" data-act="set-unit" data-type="distance" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+          <select id="set-distance" data-type="distance" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
             <option value="km" ${distance === 'km' ? 'selected' : ''}>Kilometres (km)</option>
             <option value="mi" ${distance === 'mi' ? 'selected' : ''}>Miles (mi)</option>
           </select>
         </div>
         <div class="field" style="margin:0">
           <label for="set-volume">Fuel Volume Unit</label>
-          <select id="set-volume" data-act="set-unit" data-type="volume" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
+          <select id="set-volume" data-type="volume" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
             <option value="L" ${volume === 'L' ? 'selected' : ''}>Litres (L)</option>
             <option value="gal" ${volume === 'gal' ? 'selected' : ''}>US Gallons (gal)</option>
           </select>
@@ -3693,7 +3693,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el && el.matches && el.matches('select[data-act="set-unit"]')) H['set-unit'](el, e);
+  if (el && el.matches && el.matches('select[data-type="distance"], select[data-type="volume"]')) H['set-unit'](el, e);
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('#set-currency, #currency-options')) {
