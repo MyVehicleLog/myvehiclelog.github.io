@@ -294,7 +294,7 @@ dialog.crop-ov::backdrop{background:#05080c}
   <button data-act="tab" data-tab="money"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.3c-.6-.8-1.5-1.3-2.7-1.3-1.5 0-2.6.8-2.6 2 0 2.9 5.4 1.3 5.4 4.2 0 1.2-1.1 2-2.7 2-1.2 0-2.2-.5-2.8-1.4"/><path d="M12 6.4V8m0 8v1.6"/></svg>Money</button>
   <button data-act="tab" data-tab="service"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.3-5.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Service</button>
   <button data-act="tab" data-tab="data"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
-</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.10.31</span></div></nav>
+</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.10.10</span></div></nav>
 
 <dialog id="sheet" aria-label="Modal"></dialog>
 <div id="print-report"></div>
@@ -311,7 +311,7 @@ const S = {
   // First install starts completely empty. A car is created only when the user adds/imports/restores one.
   cars: [],
   activeCarId: null,
-  cfg: { currency: "AED", distance: "km", volume: "L", theme: "system", payers: [], companyName: "Company", activeCompany: "C" },
+  cfg: { currency: "AED", curSym: "", dist: "km", vol: "L", eco: "kml", grp: "intl", theme: "system", payers: [], companyName: "Company", activeCompany: "C" },
   meta: { lastBackup: null }
 };
 
@@ -322,10 +322,68 @@ const $ = (s, r) => (r || document).querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+let nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+let nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt0 = n => nf0.format(n || 0);
 const fmt2 = n => nf2.format(n || 0);
+
+/* ---------- UNITS: records stay metric inside (km, litres); screens, forms and exports use the units chosen in Settings ---------- */
+const KM_PER_MI = 1.609344, L_PER_USGAL = 3.785411784, L_PER_UKGAL = 4.54609;
+const CURRENCIES = [
+  ['AED', 'AED', 'UAE Dirham'], ['USD', '$', 'US Dollar'], ['EUR', '\u20ac', 'Euro'], ['INR', '\u20b9', 'Indian Rupee'], ['GBP', '\u00a3', 'British Pound'],
+  ['SAR', 'SAR', 'Saudi Riyal'], ['QAR', 'QAR', 'Qatari Riyal'], ['KWD', 'KWD', 'Kuwaiti Dinar'], ['BHD', 'BHD', 'Bahraini Dinar'], ['OMR', 'OMR', 'Omani Rial'],
+  ['JOD', 'JOD', 'Jordanian Dinar'], ['EGP', 'E\u00a3', 'Egyptian Pound'], ['PKR', 'Rs', 'Pakistani Rupee'], ['BDT', '\u09f3', 'Bangladeshi Taka'],
+  ['LKR', 'Rs', 'Sri Lankan Rupee'], ['NPR', 'Rs', 'Nepalese Rupee'], ['CAD', 'CA$', 'Canadian Dollar'], ['AUD', 'A$', 'Australian Dollar'],
+  ['JPY', '\u00a5', 'Japanese Yen'], ['CNY', 'CN\u00a5', 'Chinese Yuan'], ['TRY', '\u20ba', 'Turkish Lira'], ['ZAR', 'R', 'South African Rand'],
+  ['PHP', '\u20b1', 'Philippine Peso'], ['IDR', 'Rp', 'Indonesian Rupiah'], ['MYR', 'RM', 'Malaysian Ringgit'], ['SGD', 'S$', 'Singapore Dollar'],
+  ['NGN', '\u20a6', 'Nigerian Naira'], ['KES', 'KSh', 'Kenyan Shilling'], ['CUSTOM', '', 'Custom']
+];
+function curCode() {
+  const c = (S.cfg && S.cfg.currency) || 'AED';
+  return c === 'CUSTOM' ? ((S.cfg.curSym || '').trim() || 'Amount') : c;
+}
+function currSym() {                                  // the symbol shown before amounts
+  const c = (S.cfg && S.cfg.currency) || 'AED';
+  if (c === 'CUSTOM') return (S.cfg.curSym || '').trim() || '\u00a4';
+  const f = CURRENCIES.find(x => x[0] === c);
+  return f ? f[1] : c;
+}
+const distUnit = () => (S.cfg && S.cfg.dist === 'mi') ? 'mi' : 'km';
+const toDist = km => (km == null || !isFinite(km)) ? km : (distUnit() === 'mi' ? km / KM_PER_MI : km);
+const fromDist = x => (x == null || !isFinite(x)) ? x : Math.round((distUnit() === 'mi' ? x * KM_PER_MI : x) * 1000) / 1000;
+const kmNum = km => fmt0(toDist(km));
+const kmTxt = km => fmt0(toDist(km)) + ' ' + distUnit();
+const distWord = () => distUnit() === 'mi' ? 'miles' : 'kilometres';
+const volUnit = () => { const v = S.cfg && S.cfg.vol; return (v === 'gal' || v === 'galuk') ? v : 'L'; };
+const litresPer = () => ({ L: 1, gal: L_PER_USGAL, galuk: L_PER_UKGAL })[volUnit()];
+const volName = () => ({ L: 'L', gal: 'US gal', galuk: 'UK gal' })[volUnit()];
+const volLong = () => ({ L: 'Litre', gal: 'US Gallon', galuk: 'UK Gallon' })[volUnit()];
+const volPlural = () => ({ L: 'Litres', gal: 'US Gallons', galuk: 'UK Gallons' })[volUnit()];
+const volWord = () => ({ L: 'litre', gal: 'US gallon', galuk: 'UK gallon' })[volUnit()];
+const toVol = l => (l == null || !isFinite(l)) ? l : l / litresPer();
+const toRate = r => (r == null || !isFinite(r)) ? r : r * litresPer();            // price per litre -> price per shown unit
+const fromRate = x => (x == null || !isFinite(x)) ? x : Math.round((x / litresPer()) * 100000) / 100000;
+const rateIn = r => (r == null ? '' : String(+toRate(r).toFixed(3)));
+const distIn = km => (km == null ? '' : String(Math.round(toDist(km))));
+const ecoUnit = () => { const e = S.cfg && S.cfg.eco; return (e === 'l100' || e === 'mpg' || e === 'mpguk') ? e : 'kml'; };
+const ecoName = () => ({ kml: 'km/L', l100: 'L/100km', mpg: 'mpg (US)', mpguk: 'mpg (UK)' })[ecoUnit()];
+function ecoVal(kml) {                            // km per litre -> the chosen fuel economy unit
+  if (kml == null || !isFinite(kml)) return null;
+  switch (ecoUnit()) {
+    case 'l100': return kml > 0 ? 100 / kml : null;
+    case 'mpg': return kml * L_PER_USGAL / KM_PER_MI;
+    case 'mpguk': return kml * L_PER_UKGAL / KM_PER_MI;
+    default: return kml;
+  }
+}
+const ecoNum = kml => { const v = ecoVal(kml); return v == null ? '&ndash;' : fmt2(v); };
+const ecoTxt = kml => { const v = ecoVal(kml); return v == null ? '&ndash;' : fmt2(v) + ' ' + ecoName(); };
+function rebuildNF() {
+  const loc = (S.cfg && S.cfg.grp === 'in') ? 'en-IN' : 'en-US';
+  nf0 = new Intl.NumberFormat(loc, { maximumFractionDigits: 0 });
+  nf2 = new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const fmtDate = (s, short) => { if (!s) return ''; const p = s.split('-').map(Number); return p[2] + ' ' + MON[p[1] - 1] + (short ? '' : ' ' + p[0]); };
 const monthLabel = (k, long) => { const p = k.split('-').map(Number); return (long ? MONL[p[1] - 1] : MON[p[1] - 1]) + ' ' + p[0]; };
 const dayNum = s => { const p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 864e5; };
@@ -333,173 +391,6 @@ const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0
 const today = () => ymd(new Date());
 const r2 = n => Math.round(n * 100) / 100;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-/* ---------- DYNAMIC UNITS & CURRENCY ---------- */
-const CURRENCIES = {
-  AED: { symbol: 'AED', name: 'UAE Dirham' },
-  AFN: { symbol: '؋', name: 'Afghan Afghani' },
-  ALL: { symbol: 'L', name: 'Albanian Lek' },
-  AMD: { symbol: '֏', name: 'Armenian Dram' },
-  ANG: { symbol: 'ƒ', name: 'Netherlands Antillean Guilder' },
-  AOA: { symbol: 'Kz', name: 'Angolan Kwanza' },
-  ARS: { symbol: '$', name: 'Argentine Peso' },
-  AUD: { symbol: 'A$', name: 'Australian Dollar' },
-  AWG: { symbol: 'ƒ', name: 'Aruban Florin' },
-  AZN: { symbol: '₼', name: 'Azerbaijani Manat' },
-  BAM: { symbol: 'KM', name: 'Bosnia-Herzegovina Convertible Mark' },
-  BBD: { symbol: '$', name: 'Barbadian Dollar' },
-  BDT: { symbol: '৳', name: 'Bangladeshi Taka' },
-  BGN: { symbol: 'лв', name: 'Bulgarian Lev' },
-  BHD: { symbol: '.د.ب', name: 'Bahraini Dinar' },
-  BIF: { symbol: 'FBu', name: 'Burundian Franc' },
-  BMD: { symbol: '$', name: 'Bermudan Dollar' },
-  BND: { symbol: '$', name: 'Brunei Dollar' },
-  BOB: { symbol: 'Bs.', name: 'Bolivian Boliviano' },
-  BRL: { symbol: 'R$', name: 'Brazilian Real' },
-  BSD: { symbol: '$', name: 'Bahamian Dollar' },
-  BTN: { symbol: 'Nu.', name: 'Bhutanese Ngultrum' },
-  BWP: { symbol: 'P', name: 'Botswanan Pula' },
-  BYN: { symbol: 'Br', name: 'Belarusian Ruble' },
-  BZD: { symbol: 'BZ$', name: 'Belize Dollar' },
-  CAD: { symbol: 'C$', name: 'Canadian Dollar' },
-  CDF: { symbol: 'FC', name: 'Congolese Franc' },
-  CHF: { symbol: 'Fr', name: 'Swiss Franc' },
-  CLP: { symbol: '$', name: 'Chilean Peso' },
-  CNY: { symbol: '¥', name: 'Chinese Yuan' },
-  COP: { symbol: '$', name: 'Colombian Peso' },
-  CRC: { symbol: '₡', name: 'Costa Rican Colón' },
-  CUP: { symbol: '$', name: 'Cuban Peso' },
-  CVE: { symbol: '$', name: 'Cape Verdean Escudo' },
-  CZK: { symbol: 'Kč', name: 'Czech Koruna' },
-  DJF: { symbol: 'Fdj', name: 'Djiboutian Franc' },
-  DKK: { symbol: 'kr', name: 'Danish Krone' },
-  DOP: { symbol: 'RD$', name: 'Dominican Peso' },
-  DZD: { symbol: 'د.ج', name: 'Algerian Dinar' },
-  EGP: { symbol: 'E£', name: 'Egyptian Pound' },
-  ERN: { symbol: 'Nfk', name: 'Eritrean Nakfa' },
-  ETB: { symbol: 'Br', name: 'Ethiopian Birr' },
-  EUR: { symbol: '€', name: 'Euro' },
-  FJD: { symbol: '$', name: 'Fijian Dollar' },
-  FKP: { symbol: '£', name: 'Falkland Islands Pound' },
-  GBP: { symbol: '£', name: 'British Pound' },
-  GEL: { symbol: '₾', name: 'Georgian Lari' },
-  GHS: { symbol: '₵', name: 'Ghanaian Cedi' },
-  GIP: { symbol: '£', name: 'Gibraltar Pound' },
-  GMD: { symbol: 'D', name: 'Gambian Dalasi' },
-  GNF: { symbol: 'FG', name: 'Guinean Franc' },
-  GTQ: { symbol: 'Q', name: 'Guatemalan Quetzal' },
-  GYD: { symbol: '$', name: 'Guyanaese Dollar' },
-  HKD: { symbol: 'HK$', name: 'Hong Kong Dollar' },
-  HNL: { symbol: 'L', name: 'Honduran Lempira' },
-  HRK: { symbol: 'kn', name: 'Croatian Kuna' },
-  HTG: { symbol: 'G', name: 'Haitian Gourde' },
-  HUF: { symbol: 'Ft', name: 'Hungarian Forint' },
-  IDR: { symbol: 'Rp', name: 'Indonesian Rupiah' },
-  ILS: { symbol: '₪', name: 'Israeli New Shekel' },
-  INR: { symbol: '₹', name: 'Indian Rupee' },
-  IQD: { symbol: 'ع.د', name: 'Iraqi Dinar' },
-  IRR: { symbol: '﷼', name: 'Iranian Rial' },
-  ISK: { symbol: 'kr', name: 'Icelandic Króna' },
-  JMD: { symbol: 'J$', name: 'Jamaican Dollar' },
-  JOD: { symbol: 'د.ا', name: 'Jordanian Dinar' },
-  JPY: { symbol: '¥', name: 'Japanese Yen' },
-  KES: { symbol: 'KSh', name: 'Kenyan Shilling' },
-  KGS: { symbol: 'лв', name: 'Kyrgystani Som' },
-  KHR: { symbol: '៛', name: 'Cambodian Riel' },
-  KMF: { symbol: 'CF', name: 'Comorian Franc' },
-  KPW: { symbol: '₩', name: 'North Korean Won' },
-  KRW: { symbol: '₩', name: 'South Korean Won' },
-  KWD: { symbol: 'د.ك', name: 'Kuwaiti Dinar' },
-  KYD: { symbol: '$', name: 'Cayman Islands Dollar' },
-  KZT: { symbol: '₸', name: 'Kazakhstani Tenge' },
-  LAK: { symbol: '₭', name: 'Laotian Kip' },
-  LBP: { symbol: 'ل.ل', name: 'Lebanese Pound' },
-  LKR: { symbol: '₨', name: 'Sri Lankan Rupee' },
-  LRD: { symbol: '$', name: 'Liberian Dollar' },
-  LSL: { symbol: 'L', name: 'Lesotho Loti' },
-  LYD: { symbol: 'ل.د', name: 'Libyan Dinar' },
-  MAD: { symbol: 'د.م.', name: 'Moroccan Dirham' },
-  MDL: { symbol: 'L', name: 'Moldovan Leu' },
-  MGA: { symbol: 'Ar', name: 'Malagasy Ariary' },
-  MKD: { symbol: 'ден', name: 'Macedonian Denar' },
-  MMK: { symbol: 'K', name: 'Myanmar Kyat' },
-  MNT: { symbol: '₮', name: 'Mongolian Tugrik' },
-  MOP: { symbol: 'MOP$', name: 'Macanese Pataca' },
-  MRU: { symbol: 'UM', name: 'Mauritanian Ouguiya' },
-  MUR: { symbol: '₨', name: 'Mauritian Rupee' },
-  MVR: { symbol: 'Rf', name: 'Maldivian Rufiyaa' },
-  MWK: { symbol: 'MK', name: 'Malawian Kwacha' },
-  MXN: { symbol: 'Mex$', name: 'Mexican Peso' },
-  MYR: { symbol: 'RM', name: 'Malaysian Ringgit' },
-  MZN: { symbol: 'MT', name: 'Mozambican Metical' },
-  NAD: { symbol: '$', name: 'Namibian Dollar' },
-  NGN: { symbol: '₦', name: 'Nigerian Naira' },
-  NIO: { symbol: 'C$', name: 'Nicaraguan Córdoba' },
-  NOK: { symbol: 'kr', name: 'Norwegian Krone' },
-  NPR: { symbol: '₨', name: 'Nepalese Rupee' },
-  NZD: { symbol: 'NZ$', name: 'New Zealand Dollar' },
-  OMR: { symbol: 'ر.ع.', name: 'Omani Rial' },
-  PAB: { symbol: 'B/.', name: 'Panamanian Balboa' },
-  PEN: { symbol: 'S/', name: 'Peruvian Sol' },
-  PGK: { symbol: 'K', name: 'Papua New Guinean Kina' },
-  PHP: { symbol: '₱', name: 'Philippine Peso' },
-  PKR: { symbol: '₨', name: 'Pakistani Rupee' },
-  PLN: { symbol: 'zł', name: 'Polish Zloty' },
-  PYG: { symbol: '₲', name: 'Paraguayan Guarani' },
-  QAR: { symbol: 'ر.ق', name: 'Qatari Rial' },
-  RON: { symbol: 'lei', name: 'Romanian Leu' },
-  RSD: { symbol: 'дин', name: 'Serbian Dinar' },
-  RUB: { symbol: '₽', name: 'Russian Ruble' },
-  RWF: { symbol: 'FRw', name: 'Rwandan Franc' },
-  SAR: { symbol: 'SAR', name: 'Saudi Riyal' },
-  SBD: { symbol: '$', name: 'Solomon Islands Dollar' },
-  SCR: { symbol: '₨', name: 'Seychellois Rupee' },
-  SDG: { symbol: 'ج.س.', name: 'Sudanese Pound' },
-  SEK: { symbol: 'kr', name: 'Swedish Krona' },
-  SGD: { symbol: 'S$', name: 'Singapore Dollar' },
-  SHP: { symbol: '£', name: 'Saint Helena Pound' },
-  SLL: { symbol: 'Le', name: 'Sierra Leonean Leone' },
-  SOS: { symbol: 'Sh', name: 'Somali Shilling' },
-  SRD: { symbol: '$', name: 'Surinamese Dollar' },
-  SSP: { symbol: '£', name: 'South Sudanese Pound' },
-  STN: { symbol: 'Db', name: 'São Tomé and Príncipe Dobra' },
-  SVC: { symbol: '$', name: 'Salvadoran Colón' },
-  SYP: { symbol: '£', name: 'Syrian Pound' },
-  SZL: { symbol: 'E', name: 'Swazi Lilangeni' },
-  THB: { symbol: '฿', name: 'Thai Baht' },
-  TJS: { symbol: 'ЅМ', name: 'Tajikistani Somoni' },
-  TMT: { symbol: 'm', name: 'Turkmenistani Manat' },
-  TND: { symbol: 'د.ت', name: 'Tunisian Dinar' },
-  TOP: { symbol: 'T$', name: 'Tongan Paʻanga' },
-  TRY: { symbol: '₺', name: 'Turkish Lira' },
-  TTD: { symbol: 'TT$', name: 'Trinidad and Tobago Dollar' },
-  TWD: { symbol: 'NT$', name: 'New Taiwan Dollar' },
-  TZS: { symbol: 'TSh', name: 'Tanzanian Shilling' },
-  UAH: { symbol: '₴', name: 'Ukrainian Hryvnia' },
-  UGX: { symbol: 'USh', name: 'Ugandan Shilling' },
-  USD: { symbol: '$', name: 'US Dollar' },
-  UYU: { symbol: '$U', name: 'Uruguayan Peso' },
-  UZS: { symbol: 'лв', name: 'Uzbekistani Som' },
-  VES: { symbol: 'Bs', name: 'Venezuelan Bolívar' },
-  VND: { symbol: '₫', name: 'Vietnamese Dong' },
-  VUV: { symbol: 'VT', name: 'Vanuatu Vatu' },
-  WST: { symbol: 'WS$', name: 'Samoan Tala' },
-  XAF: { symbol: 'FCFA', name: 'Central African CFA Franc' },
-  XCD: { symbol: '$', name: 'East Caribbean Dollar' },
-  XOF: { symbol: 'CFA', name: 'West African CFA Franc' },
-  XPF: { symbol: '₣', name: 'CFP Franc' },
-  YER: { symbol: '﷼', name: 'Yemeni Rial' },
-  ZAR: { symbol: 'R', name: 'South African Rand' },
-  ZMW: { symbol: 'ZK', name: 'Zambian Kwacha' },
-  ZWL: { symbol: '$', name: 'Zimbabwean Dollar' }
-};
-const getCurSym = () => (CURRENCIES[S.cfg && S.cfg.currency] || CURRENCIES.AED).symbol;
-const fmtCur = n => getCurSym() + ' ' + fmt2(n);
-const getDistUnit = () => (S.cfg && S.cfg.distance) === 'mi' ? 'mi' : 'km';
-const getVolUnit = () => (S.cfg && S.cfg.volume) === 'gal' ? 'gal' : 'L';
-const dispDist = km => km == null ? 0 : (getDistUnit() === 'mi' ? km * 0.621371 : km);
-const toKm = val => val == null ? 0 : (getDistUnit() === 'mi' ? val / 0.621371 : val);
-const dispVol = l => l == null ? 0 : (getVolUnit() === 'gal' ? l * 0.264172 : l);
-const toLit = val => val == null ? 0 : (getVolUnit() === 'gal' ? val / 0.264172 : val);
 /* ---------- PAYERS (Company, Self + user-defined) ---------- */
 const coName = () => (S.cfg && S.cfg.companyName && String(S.cfg.companyName).trim()) || 'Company';
 const customPayers = () => (S.cfg && Array.isArray(S.cfg.payers)) ? S.cfg.payers : [];
@@ -585,7 +476,7 @@ const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 function parseNum(v) {
   if (v == null || v === '' || v === '-') return null;
   if (typeof v === 'number') return isFinite(v) ? v : null;
-  const s = String(v).replace(/AED|INR|USD|EUR|km|\/L|%|,|\s/gi, '').trim();
+  const s = String(v).replace(/[^0-9.\-]/g, '').trim();
   if (s === '' || s === '-') return null;
   const n = parseFloat(s);
   return isFinite(n) ? n : null;
@@ -725,9 +616,10 @@ function initApp() {
     }
   }
 
-if (cfg) S.cfg = Object.assign({ currency: "AED", distance: "km", volume: "L", theme: "system", payers: [], companyName: "Company", activeCompany: "C" }, cfg);
+  if (cfg) S.cfg = Object.assign({ currency: "AED", curSym: "", dist: "km", vol: "L", eco: "kml", grp: "intl", theme: "system", payers: [], companyName: "Company", activeCompany: "C" }, cfg);
   if (!Array.isArray(S.cfg.payers)) S.cfg.payers = [];
   if (!S.cfg.companyName || !String(S.cfg.companyName).trim()) S.cfg.companyName = "Company";
+  rebuildNF();
   if (meta) S.meta = meta;
   applyTheme(S.cfg.theme);
 
@@ -858,7 +750,7 @@ function exportToExcel() {
   if (!window.XLSX) { toast('Loading Excel library...'); return; }
   const wb = XLSX.utils.book_new();
   const car = getActiveCar();
-  const curOdo = C.odo || car.odometer || 0;
+  const curOdo = Math.round(toDist(C.odo || car.odometer || 0));
 
   /* --- Sheet 1: CAR MAINTENANCE DASHBOARD --- */
   const dashRows = [];
@@ -871,30 +763,31 @@ function exportToExcel() {
   const tyre = (car.service || []).filter(svcIsKm).find(s => s.i === 'tyre' || /tyre|tire/i.test(s.n)) || { n: 'Tyre rotation', h: [] };
   const lastOil = (oil.h && oil.h.length) ? oil.h[oil.h.length - 1] : { k: 0, i: 5000 };
   const lastTyre = (tyre.h && tyre.h.length) ? tyre.h[tyre.h.length - 1] : { k: 0, i: 10000 };
+  const lOil = { k: Math.round(toDist(lastOil.k)), i: Math.round(toDist(lastOil.i)) }, lTyre = { k: Math.round(toDist(lastTyre.k)), i: Math.round(toDist(lastTyre.i)) };
 
   // Oil Change block
   dashRows.push(["", "🛢  OIL CHANGE"]);
-  dashRows.push(["", `Last Change on (${getDistUnit()})`, "", "", `Next Due on (${getDistUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${getDistUnit()})`, "", "", "🛢️ Oil Change Due In"]);
+  dashRows.push(["", `Last Change on (${distUnit()})`, "", "", `Next Due on (${distUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${distUnit()})`, "", "", "🛢️ Oil Change Due In"]);
   dashRows.push([
     "",
-    lastOil.k, "", "",
-    { f: `B7+${lastOil.i}`, v: lastOil.k + lastOil.i }, "", "",
+    lOil.k, "", "",
+    { f: `B7+${lOil.i}`, v: lOil.k + lOil.i }, "", "",
     curOdo, "", "",
-    { f: `H7-B7`, v: Math.max(0, curOdo - lastOil.k) }, "", "",
-    { f: `E7-H7`, v: (lastOil.k + lastOil.i) - curOdo }
+    { f: `H7-B7`, v: Math.max(0, curOdo - lOil.k) }, "", "",
+    { f: `E7-H7`, v: (lOil.k + lOil.i) - curOdo }
   ]);
   dashRows.push([]);
 
   // Tyre Rotation block
   dashRows.push(["", "🛞  TYRE ROTATION"]);
-  dashRows.push(["", `Last Change on (${getDistUnit()})`, "", "", `Next Due on (${getDistUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${getDistUnit()})`, "", "", "🛞 Tyre Rotation Due In"]);
+  dashRows.push(["", `Last Change on (${distUnit()})`, "", "", `Next Due on (${distUnit()})`, "", "", "📍 Current Odometer", "", "", `Done (${distUnit()})`, "", "", "🛞 Tyre Rotation Due In"]);
   dashRows.push([
     "",
-    lastTyre.k, "", "",
-    { f: `B11+${lastTyre.i}`, v: lastTyre.k + lastTyre.i }, "", "",
+    lTyre.k, "", "",
+    { f: `B11+${lTyre.i}`, v: lTyre.k + lTyre.i }, "", "",
     { f: `H7`, v: curOdo }, "", "",
-    { f: `H11-B11`, v: Math.max(0, curOdo - lastTyre.k) }, "", "",
-    { f: `E11-H11`, v: (lastTyre.k + lastTyre.i) - curOdo }
+    { f: `H11-B11`, v: Math.max(0, curOdo - lTyre.k) }, "", "",
+    { f: `E11-H11`, v: (lTyre.k + lTyre.i) - curOdo }
   ]);
   dashRows.push([]);
 
@@ -955,17 +848,15 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, dashWS, "VEHICLE MAINTENANCE DASHBOARD");
 
   /* --- Sheet 2: Fuel Log --- */
-  const fillsHeader = [["ID", "Date", `Odometer (${getDistUnit()})`, `Amount (${getCurSym()})`, `Rate/${getVolUnit()}`, "Paid By (C/S)", `Volume (${getVolUnit()})`, `${getDistUnit()} Driven`, `${getDistUnit()}/${getVolUnit()} Average`]];
+  const fillsHeader = [["ID", "Date", `Odometer (${distUnit()})`, `Amount (${curCode()})`, `Rate/${volLong()}`, "Paid By (C/S)", volPlural(), `${distUnit() === 'mi' ? 'Miles' : 'Km'} Driven`, `${distUnit()}/${volName()} Average`]];
   const fillsData = (car.fills || []).map((f, i) => {
     const rowNum = i + 2;
-    const dispOdo = f.k != null ? dispDist(f.k) : '';
-    const dispVol = f.r > 0 ? f.a / f.r : 0; // Litres
     return [
       f.i,
       f.d,
-      f.k != null ? dispDist(f.k) : '',
+      f.k != null ? Math.round(toDist(f.k) * 100) / 100 : '',
       f.a,
-      f.r,
+      Math.round(toRate(f.r) * 10000) / 10000,
       (f.b === 'C' || f.b === 'S') ? f.b : payerName(f.b),
       { f: `IF(E${rowNum}>0, D${rowNum}/E${rowNum}, 0)` },
       { f: `IF(AND(ISNUMBER(C${rowNum}), ISNUMBER(C${rowNum - 1})), C${rowNum}-C${rowNum - 1}, "")` },
@@ -976,19 +867,19 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, fillsWS, "Fuel Log");
 
   /* --- Sheet 3: Payments --- */
-  const payHeader = [["ID", "Date Received", `Amount (${getCurSym()})`, "Notes", "Company"]];
+  const payHeader = [["ID", "Date Received", `Amount (${curCode()})`, "Notes", "Company"]];
   const payData = (car.payments || []).map(p => [p.i, p.d, p.a, p.n || '', payerName(coOfPay(p))]);
   const payWS = XLSX.utils.aoa_to_sheet([...payHeader, ...payData]);
   XLSX.utils.book_append_sheet(wb, payWS, "Payments");
 
   /* --- Sheet 4: Service Log --- */
-  const svcHeader = [["Service ID", "Service Name", `Odometer (${getDistUnit()})`, `Interval (${getDistUnit()})`, "Type", "Date", "Every", "Unit"]];
+  const svcHeader = [["Service ID", "Service Name", `Odometer (${distUnit()})`, `Interval (${distUnit()})`, "Type", "Date", "Every", "Unit"]];
   const svcRows = [];
   (car.service || []).forEach(s => {
     (s.h || []).forEach(h => {
       if (svcIsEntry(s)) svcRows.push([s.i, s.n, '', '', 'Entry', h.d, '', '']);
       else if (svcIsDate(s)) svcRows.push([s.i, s.n, '', '', 'Date Reminder', h.d, s.v || 1, s.u === 'm' ? 'months' : 'days']);
-      else svcRows.push([s.i, s.n, h.k, h.i, 'Reminder', '', '', '']);
+      else svcRows.push([s.i, s.n, Math.round(toDist(h.k) * 100) / 100, Math.round(toDist(h.i) * 100) / 100, 'Reminder', '', '', '']);
     });
   });
   const svcWS = XLSX.utils.aoa_to_sheet([...svcHeader, ...svcRows]);
@@ -1002,6 +893,8 @@ function exportToExcel() {
 /* ---------- 2. EXCEL IMPORT ---------- */
 function parseDashboardSheet(rows, car) {
   let importedSvc = 0;
+  const mul = rows.some(rw => (rw || []).some(c => /\(mi\)/i.test(String(c)))) ? KM_PER_MI : 1;       // file exported in miles
+  const cvt = v => (v == null ? v : Math.round(v * mul * 1000) / 1000);
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r] || [];
     const fullRowStr = row.map(c => String(c || '').trim()).join(' ').toUpperCase();
@@ -1030,9 +923,9 @@ function parseDashboardSheet(rows, car) {
         const nextCol = headerRow.findIndex(h => /next due/i.test(String(h)));
         const curCol  = headerRow.findIndex(h => /current odometer/i.test(String(h)));
 
-        const lastKm = lastCol >= 0 ? parseNum(valRow[lastCol]) : null;
-        const nextKm = nextCol >= 0 ? parseNum(valRow[nextCol]) : null;
-        const curKm  = curCol >= 0 ? parseNum(valRow[curCol]) : null;
+        const lastKm = lastCol >= 0 ? cvt(parseNum(valRow[lastCol])) : null;
+        const nextKm = nextCol >= 0 ? cvt(parseNum(valRow[nextCol])) : null;
+        const curKm  = curCol >= 0 ? cvt(parseNum(valRow[curCol])) : null;
 
         if (curKm && (!car.odometer || curKm > car.odometer)) car.odometer = curKm;
         const interval = (nextKm && lastKm && nextKm > lastKm) ? (nextKm - lastKm) : (svcId === 'tyre' ? 10000 : 5000);
@@ -1060,6 +953,15 @@ function importFromExcel(e) {
       const workbook = XLSX.read(data, { type: 'array' });
       const car = getActiveCar();
       let importedFills = 0, importedPays = 0, importedSvc = 0;
+      // the file may have been exported in miles / gallons: the column headings tell us
+      const fileU = { dist: 1, vol: 1 };
+      const scanHead = rows => { Object.keys((rows && rows[0]) || {}).forEach(k => {
+        const t = String(k).trim();
+        if (/^(odometer|interval)/i.test(t) && /\(mi\)/i.test(t)) fileU.dist = KM_PER_MI;
+        if (/^rate/i.test(t)) { if (/us\s*gal/i.test(t)) fileU.vol = L_PER_USGAL; else if (/uk\s*gal/i.test(t)) fileU.vol = L_PER_UKGAL; }
+      }); };
+      const kmOf = v => (v == null ? v : Math.round(v * fileU.dist * 1000) / 1000);
+      const pick = (r, re) => { const k = Object.keys(r).find(x => re.test(String(x).trim())); return k === undefined ? undefined : r[k]; };
 
       // 1. Check for CAR MAINTENANCE DASHBOARD
       const dashSheetName = workbook.SheetNames.find(n => /dashboard|maintenance/i.test(n));
@@ -1073,18 +975,19 @@ function importFromExcel(e) {
       if (fuelSheetName) {
         const rows = XLSX.utils.sheet_to_json(workbook.Sheets[fuelSheetName]);
         if (rows && rows.length) {
+          scanHead(rows);
           const parsedFills = rows.map((r, idx) => {
             const dateVal = r["Date"] || r["date"] || r["DATE"] || today();
-            const odoVal = r["Odometer (km)"] || r["Odometer"] || r["km"] || r["KM"];
-            const amtVal = r["Amount (AED)"] || r["Amount"] || r["cost"] || r["Total"];
-            const rateVal = r["Rate/Litre"] || r["Rate"] || r["price"] || 2.57;
+            const odoVal = pick(r, /^(odometer|km$)/i);
+            const amtVal = pick(r, /^(amount|cost$|total$)/i);
+            const rateVal = pick(r, /^(rate|price$)/i);
             const byVal = String(r["Paid By (C/S)"] || r["Paid By"] || r["By"] || 'C').trim();
             return {
               i: r["ID"] || `f_imp_${uid()}_${idx}`,
               d: parseExcelDate(dateVal),
-              k: parseNum(odoVal),
+              k: kmOf(parseNum(odoVal)),
               a: parseNum(amtVal) || 0,
-              r: parseNum(rateVal) || 2.57,
+              r: parseNum(rateVal) ? Math.round((parseNum(rateVal) / fileU.vol) * 100000) / 100000 : 2.57,
               b: resolvePayer(byVal)
             };
           }).filter(f => f.a > 0);
@@ -1104,7 +1007,7 @@ function importFromExcel(e) {
           car.payments = rows.map((r, idx) => ({
             i: r["ID"] || `p_imp_${uid()}_${idx}`,
             d: parseExcelDate(r["Date Received"] || r["Date"] || today()),
-            a: parseNum(r["Amount (AED)"] || r["Amount"]) || 0,
+            a: parseNum(pick(r, /^amount/i)) || 0,
             n: String(r["Notes"] || r["Note"] || ''),
             c: resolveCompany(r["Company"] || r["Paid By"] || '')
           })).filter(p => p.a > 0);
@@ -1117,6 +1020,7 @@ function importFromExcel(e) {
       if (svcSheetName) {
         const rows = XLSX.utils.sheet_to_json(workbook.Sheets[svcSheetName]);
         if (rows && rows.length) {
+          scanHead(rows);
           const map = {};
           rows.forEach(r => {
             const sid = r["Service ID"] || 's_' + uid();
@@ -1126,8 +1030,8 @@ function importFromExcel(e) {
               : isDateRem ? { i: sid, n: sname, t: 'd', v: Math.max(1, Math.round(parseNum(r["Every"]) || 1)), u: /month/i.test(String(r["Unit"] || '')) ? 'm' : 'd', h: [] }
               : { i: sid, n: sname, h: [] };
             if (map[sid].t === 'e' || map[sid].t === 'd') { const dd = parseExcelDate(r["Date"] || r["Date of Service"]); if (/^\d{4}-\d{2}-\d{2}$/.test(dd)) map[sid].h.push({ d: dd }); return; }
-            const kmVal = parseNum(r["Odometer (km)"] || r["Odometer"]);
-            const intVal = parseNum(r["Interval (km)"] || r["Interval"]) || 5000;
+            const kmVal = kmOf(parseNum(pick(r, /^odometer/i)));
+            const ivRaw = parseNum(pick(r, /^interval/i)), intVal = ivRaw ? kmOf(ivRaw) : 5000;
             if (kmVal) map[sid].h.push({ k: kmVal, i: intVal });
           });
           if (Object.keys(map).length) {
@@ -1186,6 +1090,8 @@ function restoreFromJson(e) {
           if (data.cfg && Array.isArray(data.cfg.payers)) S.cfg.payers = data.cfg.payers;
           if (data.cfg && data.cfg.companyName) S.cfg.companyName = data.cfg.companyName;
           if (data.cfg && data.cfg.activeCompany) S.cfg.activeCompany = data.cfg.activeCompany;
+          ['currency', 'curSym', 'dist', 'vol', 'eco', 'grp'].forEach(k => { if (data.cfg && data.cfg[k] !== undefined) S.cfg[k] = data.cfg[k]; });
+          rebuildNF();
           persistAll();
           closeSheet();
           render();
@@ -1220,7 +1126,7 @@ const tokenValid = () => !!Sync.token && Date.now() < Sync.exp - 60000;
 function hashStr(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return h + ':' + str.length; }
 function syncPayload() {
   const c = S.cfg || {};
-  return { v: 1, cars: S.cars, cfg: { currency: c.currency, payers: c.payers || [], companyName: c.companyName, activeCompany: c.activeCompany } };
+  return { v: 1, cars: S.cars, cfg: { currency: c.currency, curSym: c.curSym, dist: c.dist, vol: c.vol, eco: c.eco, grp: c.grp, payers: c.payers || [], companyName: c.companyName, activeCompany: c.activeCompany } };
 }
 const syncHash = () => hashStr(JSON.stringify(syncPayload()));
 function countsOf(p) {
@@ -1301,9 +1207,10 @@ function applyRemotePayload(p) {
   try {
     S.cars = p.cars;
     if (!S.cars.some(c => c.id === S.activeCarId)) S.activeCarId = S.cars[0] ? S.cars[0].id : null;
-    if (p.cfg) ['currency', 'payers', 'companyName', 'activeCompany'].forEach(k => { if (p.cfg[k] !== undefined) S.cfg[k] = p.cfg[k]; });
+    if (p.cfg) ['currency', 'curSym', 'dist', 'vol', 'eco', 'grp', 'payers', 'companyName', 'activeCompany'].forEach(k => { if (p.cfg[k] !== undefined) S.cfg[k] = p.cfg[k]; });
     persistAll();
   } finally { Sync.applying = false; }
+  rebuildNF();
   closeSheet(); render();
 }
 
@@ -1477,14 +1384,14 @@ function exportPdfReport(fromDate, toDate) {
     }
     const sc = svcCalc(s);
     if (!sc) return;
-    const dueTxt = sc.left >= 0 ? `${fmt0(dispDist(sc.left))} ${getDistUnit()} left` : `Overdue by ${fmt0(dispDist(-sc.left))} ${getDistUnit()}`;
+    const dueTxt = sc.left >= 0 ? `${kmTxt(sc.left)} left` : `Overdue by ${kmTxt(-sc.left)}`;
     const stateTxt = { ok: 'On Track', soon: 'Due Soon', late: 'Overdue' }[sc.state];
     svcRows += `
       <tr>
         <td><b>${esc(s.n)}</b></td>
-        <td class="num">${fmt0(dispDist(sc.last.k))} ${getDistUnit()}</td>
-<td class="num">${fmt0(dispDist(sc.last.i))} ${getDistUnit()}</td>
-<td class="num">${fmt0(dispDist(sc.next))} ${getDistUnit()}</td>
+        <td class="num">${kmTxt(sc.last.k)}</td>
+        <td class="num">${kmTxt(sc.last.i)}</td>
+        <td class="num">${kmTxt(sc.next)}</td>
         <td>${stateTxt}</td>
         <td class="num">${dueTxt}</td>
       </tr>
@@ -1503,11 +1410,11 @@ function exportPdfReport(fromDate, toDate) {
     fillsRows += `
       <tr>
         <td>${fmtDate(f.d, true)}</td>
-        <td class="num">${f.rental ? 'Rental' : fmt0(dispDist(f.k)) + ' ' + getDistUnit()}</td>
-        <td class="num">${fmtCur(f.a)}</td>
-        <td class="num">${f.r ? fmt2(f.r) : '-'}</td>
+        <td class="num">${f.rental ? 'Rental' : kmTxt(f.k)}</td>
+        <td class="num">${currSym()} ${fmt2(f.a)}</td>
+        <td class="num">${f.r ? fmt2(toRate(f.r)) : '-'}</td>
         <td>${esc(payerName(f.b))}</td>
-        <td class="num">${f.avg != null ? fmt2(f.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '-'}</td>
+        <td class="num">${f.avg != null ? ecoTxt(f.avg) : '-'}</td>
       </tr>
     `;
   });
@@ -1520,15 +1427,15 @@ function exportPdfReport(fromDate, toDate) {
       </div>
       <div style="text-align:right">
         <p><b>Report Period:</b> ${periodLabel}</p>
-        <p><b>Current Odometer:</b> ${fmt0(dispDist(odo))} ${getDistUnit()}</p>
+        <p><b>Current Odometer:</b> ${kmTxt(odo)}</p>
       </div>
     </div>
 
     <div class="p-grid">
-      <div class="p-card"><b>${periodAvgs.length ? fmt2(mean(periodAvgs)) + ' ' + getDistUnit() + '/' + getVolUnit() : 'N/A'}</b><span>Period Mileage</span></div>
-<div class="p-card"><b>${fmtCur(periodAll)}</b><span>Period Fuel Spend</span></div>
-<div class="p-card"><b>${fmtCur(periodReceived)}</b><span>Reimbursed (Period)</span></div>
-      <div class="p-card"><b>${fmt0(dispDist(periodRun))} ${getDistUnit()}</b><span>Driven (Period)</span></div>
+      <div class="p-card"><b>${periodAvgs.length ? ecoTxt(mean(periodAvgs)) : 'N/A'}</b><span>Period Mileage</span></div>
+      <div class="p-card"><b>${currSym()} ${fmt2(periodAll)}</b><span>Period Fuel Spend</span></div>
+      <div class="p-card"><b>${currSym()} ${fmt2(periodReceived)}</b><span>Reimbursed (Period)</span></div>
+      <div class="p-card"><b>${kmTxt(periodRun)}</b><span>Driven (Period)</span></div>
     </div>
 
     <div class="p-sec">
@@ -1564,9 +1471,9 @@ function exportPdfReport(fromDate, toDate) {
     <div class="p-sec">
       <h2>Fuel Summary by Payer (Period)</h2>
       <table class="p-tbl" style="width: auto; min-width: 320px;">
-        ${payersFor(periodBy).map(p => `<tr><td><b>${esc(p.n)} Paid:</b></td><td class="num">${fmtCur(periodBy[p.id] || 0)}</td></tr>`).join('')}
-${periodCos.map(co => `<tr><td><b>Received from ${esc(co.n)}:</b></td><td class="num">${fmtCur(periodRecBy[co.id] || 0)}</td></tr>
-<tr style="font-weight:700"><td>Net ${esc(co.n)} (Paid − Received):</td><td class="num">${fmtCur((periodBy[co.id] || 0) - (periodRecBy[co.id] || 0))}</td></tr>`).join('')}
+        ${payersFor(periodBy).map(p => `<tr><td><b>${esc(p.n)} Paid:</b></td><td class="num">${currSym()} ${fmt2(periodBy[p.id] || 0)}</td></tr>`).join('')}
+        ${periodCos.map(co => `<tr><td><b>Received from ${esc(co.n)}:</b></td><td class="num">${currSym()} ${fmt2(periodRecBy[co.id] || 0)}</td></tr>
+        <tr style="font-weight:700"><td>Net ${esc(co.n)} (Paid − Received):</td><td class="num">${currSym()} ${fmt2((periodBy[co.id] || 0) - (periodRecBy[co.id] || 0))}</td></tr>`).join('')}
       </table>
     </div>
 
@@ -1578,9 +1485,9 @@ ${periodCos.map(co => `<tr><td><b>Received from ${esc(co.n)}:</b></td><td class=
             <th>Date</th>
             <th class="num">Odometer</th>
             <th class="num">Amount</th>
-            <th class="num">Rate/${getVolUnit()}</th>
+            <th class="num">Rate/${volName()}</th>
             <th>Paid By</th>
-            <th class="num">Avg ${getDistUnit()}/${getVolUnit()}</th>
+            <th class="num">Avg ${ecoName()}</th>
           </tr>
         </thead>
         <tbody>
@@ -1674,15 +1581,6 @@ function confirmTap(el, label, fn) {
 const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
 
 /* ---------- VEHICLE TYPES (icon + label). Stored on the vehicle as vt (and vn for a custom name). ---------- */
-const FUEL_TYPES = [
-  { id: 'petrol', n: 'Petrol' },
-  { id: 'diesel', n: 'Diesel' },
-  { id: 'ev', n: 'EV' },
-  { id: 'hybrid', n: 'Hybrid' },
-  { id: 'cng', n: 'CNG' },
-  { id: 'custom', n: 'Custom' }
-];
-
 const VT_TYPES = [
   { id: 'bike', n: 'Bike' }, { id: 'car', n: 'Car' }, { id: 'suv', n: 'SUV' },
   { id: 'truck', n: 'Truck' }, { id: 'taxi', n: 'Taxi' }, { id: 'custom', n: 'Custom' }
@@ -1710,16 +1608,6 @@ function vtPickerHTML(p, cur, customName) {       // p = id prefix of the sheet 
     <input type="hidden" id="${p}-vt" value="${esc(cur)}">
     <div id="${p}-vn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}><input id="${p}-vn" type="text" maxlength="20" placeholder="Type name, e.g. Van, Bus, Tractor" value="${esc(customName || '')}" autocomplete="off"></div></div>`;
 }
-function fuelPickerHTML(p, cur, customName) {
-  return `<div class="field"><label>Fuel Type</label>
-    <div class="seg2" role="group" aria-label="Fuel type">
-      ${FUEL_TYPES.map(t => `<label><input type="radio" name="${p}-fuel" value="${t.id}" ${t.id === cur ? 'checked' : ''}><span>${t.n}</span></label>`).join('')}
-    </div>
-    <div id="${p}-fn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}>
-      <input id="${p}-fn" type="text" maxlength="20" placeholder="e.g. LPG, CNG" value="${esc(customName || '')}" autocomplete="off">
-    </div>
-  </div>`;
-}
 
 /* ---------- MULTI-VEHICLE: VEHICLE SELECTION (Settings tab) ---------- */
 function carSelectionSection() {
@@ -1731,7 +1619,7 @@ function carSelectionSection() {
       <div class="car-card ${isActive ? 'active' : ''}">
         <div class="car-card-body" data-act="switch-car" data-id="${esc(c.id)}">
           <b><i class="vt-ic">${vtIcon(c.vt || 'car')}</i>${esc(c.name)} ${isActive ? '<span class="badge-active">ACTIVE</span>' : ''}</b>
-          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${fmt0(curKm)} ${getDistUnit()} &middot; Pending: ${fmtCur(bal)}</span>
+          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${kmTxt(curKm)} &middot; Pending: ${currSym()} ${fmt2(bal)}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;margin-left:8px">
           <button class="btn small ghost" data-act="edit-car" data-id="${esc(c.id)}">Edit</button>
@@ -1755,10 +1643,9 @@ function carSelectionSection() {
 function addCarSheet() {
   openSheet('add-car', '', 'Add New Vehicle', `
     ${vtPickerHTML('c', 'car', '')}
-	    ${fuelPickerHTML('c', 'petrol', '')}
     <div class="field"><label for="c-name">Vehicle Name / Model</label><input id="c-name" type="text" placeholder="e.g. Honda Civic, Yamaha R15, Nissan Patrol" autocomplete="off"></div>
     <div class="field"><label for="c-plate">Number Plate / Reg No (optional)</label><input id="c-plate" type="text" placeholder="e.g. DXB-12345" autocomplete="off"></div>
-    <div class="field"><label for="c-km">Current Odometer (${getDistUnit()})</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. ${getDistUnit() === 'mi' ? '90000' : '150000'}" autocomplete="off"></div>
+    <div class="field"><label for="c-km">Current Odometer (${distUnit()})</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. 150000" autocomplete="off"></div>
     <div class="actions"><button class="btn" data-act="save-new-car">Add Vehicle</button></div>
   `);
   $('#c-name', sheet).focus();
@@ -1767,11 +1654,8 @@ function addCarSheet() {
 function saveNewCar() {
   const name = $('#c-name', sheet).value.trim();
   const plate = $('#c-plate', sheet).value.trim();
-  const km = parseNum($('#c-km', sheet).value) || 0;
+  const km = fromDist(parseNum($('#c-km', sheet).value)) || 0;
   const vt = $('#c-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#c-vn', sheet).value.trim().slice(0, 20) : '';
-    const fRad = sheet.querySelector('input[name="c-fuel"]:checked');
-  const fuelType = fRad ? fRad.value : 'petrol';
-  const fuelCustom = fuelType === 'custom' ? $('#c-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name is required.'); return; }
 
   const newCar = {
@@ -1780,14 +1664,12 @@ function saveNewCar() {
     plate,
     vt,
     vn,
-	    fuelType,
-    fuelCustom,
-    odometer: toKm(km),
+    odometer: km,
     fills: [],
     payments: [],
     service: [
-      { i: 'oil', n: 'Oil change', h: [{ k: toKm(km), i: 5000 }] },
-      { i: 'tyre', n: 'Tyre rotation', h: [{ k: toKm(km), i: 10000 }] }
+      { i: 'oil', n: 'Oil change', h: [{ k: km, i: 5000 }] },
+      { i: 'tyre', n: 'Tyre rotation', h: [{ k: km, i: 10000 }] }
     ]
   };
   S.cars.push(newCar);
@@ -1803,10 +1685,9 @@ function editCarSheet(id) {
   if (!c) return;
   openSheet('edit-car', id, 'Edit ' + c.name, `
     ${vtPickerHTML('ec', c.vt || 'car', c.vn)}
-	    ${fuelPickerHTML('ec', c.fuelType || 'petrol', c.fuelCustom)}
     <div class="field"><label for="ec-name">Vehicle Name / Model</label><input id="ec-name" type="text" value="${esc(c.name)}"></div>
     <div class="field"><label for="ec-plate">Number Plate / Reg No</label><input id="ec-plate" type="text" value="${esc(c.plate || '')}"></div>
-    <div class="field"><label for="ec-km">Current Odometer (${getDistUnit()})</label><input id="ec-km" type="text" inputmode="numeric" value="${dispDist(c.odometer) || ''}"></div>
+    <div class="field"><label for="ec-km">Current Odometer (${distUnit()})</label><input id="ec-km" type="text" inputmode="numeric" value="${c.odometer ? distIn(c.odometer) : ''}"></div>
     <div class="actions">
       <button class="btn" data-act="save-edit-car">Save Changes</button>
       ${S.cars.length > 1 ? `<button class="btn danger" data-act="del-car-from-edit" data-id="${esc(c.id)}">Delete Vehicle</button>` : ''}
@@ -1818,11 +1699,8 @@ function saveEditCar() {
   const id = sheet.dataset.id;
   const name = $('#ec-name', sheet).value.trim();
   const plate = $('#ec-plate', sheet).value.trim();
-  const km = parseNum($('#ec-km', sheet).value);
+  const km = fromDist(parseNum($('#ec-km', sheet).value));
   const vt = $('#ec-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#ec-vn', sheet).value.trim().slice(0, 20) : '';
-    const fRad = sheet.querySelector('input[name="ec-fuel"]:checked');
-  const fuelType = fRad ? fRad.value : 'petrol';
-  const fuelCustom = fuelType === 'custom' ? $('#ec-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name cannot be empty.'); return; }
   const c = S.cars.find(x => x.id === id);
   if (c) {
@@ -1830,9 +1708,7 @@ function saveEditCar() {
     c.plate = plate;
     c.vt = vt;
     c.vn = vn;
-	    c.fuelType = fuelType;
-    c.fuelCustom = fuelCustom;
-    if (km != null && km >= 0) c.odometer = Math.round(toKm(km));
+    if (km != null && km >= 0) c.odometer = km;
   }
   persistAll();
   closeSheet();
@@ -1842,7 +1718,7 @@ function saveEditCar() {
 
 /* ---------- VIEWS ---------- */
 function odometerHTML(km, animate) {
-  let s = String(Math.max(0, Math.round(km || 0)));
+  let s = String(Math.max(0, Math.round(toDist(km || 0))));
   if (s.length < 6) s = s.padStart(6, '0');
   const n = s.length; let h = '';
   for (let i = 0; i < n; i++) {
@@ -1851,7 +1727,7 @@ function odometerHTML(km, animate) {
     for (let d = 0; d < 10; d++) col += '<i>' + d + '</i>';
     h += `<span class="drum${gap}"><span class="strip${animate ? ' roll' : ''}" style="--d:${s[i]};--i:${i}">${col}</span></span>`;
   }
-  return `<div class="odo-digits" role="img" aria-label="Odometer ${fmt0(km || 0)} ${getDistUnit()}">${h}<span class="odo-unit">${getDistUnit()}</span></div>`;
+  return `<div class="odo-digits" role="img" aria-label="Odometer ${kmNum(km || 0)} ${distWord()}">${h}<span class="odo-unit">${distUnit()}</span></div>`;
 }
 
 function entryRow(it, full) {
@@ -1931,7 +1807,7 @@ function svcRow(it, full) {
   if (svcIsDate(it)) return dateRow(it, full);
   const c = svcCalc(it);
   if (!c) return '';
-    const leftTxt = c.left >= 0 ? fmt0(dispDist(c.left)) + ' ' + getDistUnit() + ' left' : 'Overdue by ' + fmt0(dispDist(-c.left)) + ' ' + getDistUnit();
+  const leftTxt = c.left >= 0 ? kmTxt(c.left) + ' left' : 'Overdue by ' + kmTxt(-c.left);
   const stateTxt = { ok: 'On track', soon: 'Due soon', late: 'Overdue' }[c.state];
   let h = `
     <div class="svc">
@@ -1943,14 +1819,14 @@ function svcRow(it, full) {
         <span style="width:${Math.round(c.frac * 100)}%"></span>
       </div>
       <div class="svc-meta num">
-        <span>Next at ${fmt0(dispDist(c.next))} ${getDistUnit()}</span>
-        <span>Every ${fmt0(dispDist(c.last.i))} ${getDistUnit()}</span>
+        <span>Next at ${kmTxt(c.next)}</span>
+        <span>Every ${kmTxt(c.last.i)}</span>
       </div>
   `;
   if (full) {
     h += `
       <div class="svc-meta num" style="margin-top:4px">
-        <span>Last done at ${fmt0(dispDist(c.last.k))} ${getDistUnit()}</span>
+        <span>Last done at ${kmTxt(c.last.k)}</span>
         <span class="${c.state}">${stateTxt}</span>
       </div>
       <div class="svc-actions">
@@ -1962,9 +1838,9 @@ function svcRow(it, full) {
       const j = c.h.length - 1 - idx; let note = '';
       if (j > 0) {
         const due = c.h[j - 1].k + c.h[j - 1].i, diff = e.k - due;
-        note = diff > 0 ? fmt0(dispDist(diff)) + ' ' + getDistUnit() + ' late' : (diff < 0 ? fmt0(dispDist(-diff)) + ' ' + getDistUnit() + ' early' : 'on time');
+        note = diff > 0 ? kmTxt(diff) + ' late' : (diff < 0 ? kmTxt(-diff) + ' early' : 'on time');
       }
-      return `<div class="hrow num"><span>Done at ${fmt0(dispDist(e.k))} ${getDistUnit()}</span><span class="muted">${note}</span></div>`;
+      return `<div class="hrow num"><span>Done at ${kmTxt(e.k)}</span><span class="muted">${note}</span></div>`;
     }).join('');
     h += `<details class="hist"><summary>History (${c.h.length})</summary>${rows}</details>`;
   }
@@ -2043,8 +1919,8 @@ function prevCompaniesHTML(c) {
       ${prev.map(l => `
         <div class="prow">
           <i style="background:${payerColor(l.id)}"></i>
-          <span class="pn">${esc(l.n)}<span class="muted small num" style="display:block;font-weight:400">Fuel ${fmtCur(l.fuel)} &minus; Received ${fmtCur(l.rec)}</span></span>
-          <b class="num">${fmtCur(l.bal)}</b>
+          <span class="pn">${esc(l.n)}<span class="muted small num" style="display:block;font-weight:400">Fuel ${fmt2(l.fuel)} &minus; Received ${fmt2(l.rec)}</span></span>
+          <b class="num">${currSym()} ${fmt2(l.bal)}</b>
           <button class="btn small ghost" data-act="add-pay" data-co="${esc(l.id)}">Record payment</button>
         </div>`).join('')}
     </div>`;
@@ -2060,7 +1936,7 @@ function viewHome() {
         <span>${esc(car.plate || '')}</span>
       </div>
       ${odometerHTML(c.odo, animateOdo)}
-      <p class="odo-meta num">${lr ? 'Last fill ' + fmtDate(lr.d) + (lr.avg != null ? ' &middot; ' + fmt2(lr.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '') : 'No fill-ups yet'}</p>
+      <p class="odo-meta num">${lr ? 'Last fill ' + fmtDate(lr.d) + (lr.avg != null ? ' &middot; ' + ecoTxt(lr.avg) : '') : 'No fill-ups yet'}</p>
       <button class="btn on-dark" data-act="add-fill">${PLUS} Add fill-up</button>
     </section>
   `;
@@ -2074,8 +1950,8 @@ function viewHome() {
     <section class="sec">
       <h2>Pending from ${esc(coN)}</h2>
       <div class="pending">
-        <div class="big num"><span class="cur">${getCurSym()}</span> ${fmt2(bal)}</div>
-        <p class="muted small num">${esc(coN)} Fuel ${fmtCur(c.comp)} &minus; Received ${fmtCur(c.received)}</p>
+        <div class="big num"><span class="cur">${currSym()}</span> ${fmt2(bal)}</div>
+        <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
         ${bal < 0 ? '<p class="small" style="margin-top:6px;color:var(--ok)">' + esc(coN) + ' has paid more than the billed fuel.</p>' : ''}
         <button class="btn" data-act="add-pay" data-co="${esc(coId)}">Record payment</button>
       </div>
@@ -2088,9 +1964,9 @@ function viewHome() {
       <h2>Fuel Average</h2>
       <div class="panel pad">
         <div class="avgline num">
-<div><b>${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span class="muted small">${getDistUnit()}/${getVolUnit()} overall</span></div>
-${c.avg10 != null ? `<div class="sub"><b>${fmt2(c.avg10)}</b><span class="muted small">${getDistUnit()}/${getVolUnit()}, last 10 fills</span></div>` : ''}
-${c.avgLast != null ? `<div class="sub"><b>${fmt2(c.avgLast)}</b><span class="muted small">${getDistUnit()}/${getVolUnit()}, last fill</span></div>` : ''}
+          <div><b>${c.avg != null ? ecoNum(c.avg) : '&ndash;'}</b><span class="muted small">${ecoName()} overall</span></div>
+          ${c.avg10 != null ? `<div class="sub"><b>${ecoNum(c.avg10)}</b><span class="muted small">${ecoName()}, last 10 fills</span></div>` : ''}
+          ${c.avgLast != null ? `<div class="sub"><b>${ecoNum(c.avgLast)}</b><span class="muted small">${ecoName()}, last fill</span></div>` : ''}
         </div>
       </div>
     </section>
@@ -2109,7 +1985,7 @@ ${c.avgLast != null ? `<div class="sub"><b>${fmt2(c.avgLast)}</b><span class="mu
           ${wp.map(x => `<span style="width:${(x.v / tot * 100)}%;background:${payerColor(x.id)}"></span>`).join('')}
         </div>
         <div class="legend num">
-          ${wp.map(x => `<i style="background:${payerColor(x.id)}"></i><span>${esc(x.n)} &middot; ${x.pct}%</span><span class="v">${fmtCur(x.v)}</span>`).join('')}
+          ${wp.map(x => `<i style="background:${payerColor(x.id)}"></i><span>${esc(x.n)} &middot; ${x.pct}%</span><span class="v">${currSym()} ${fmt2(x.v)}</span>`).join('')}
         </div>
       </div>
     </section>
@@ -2119,39 +1995,6 @@ ${c.avgLast != null ? `<div class="sub"><b>${fmt2(c.avgLast)}</b><span class="mu
   return h;
 }
 
-function unitsSection() {
-  const currency = (S.cfg && S.cfg.currency) || 'AED';
-  const distance = (S.cfg && S.cfg.distance) || 'km';
-  const volume = (S.cfg && S.cfg.volume) || 'L';
-  const curObj = CURRENCIES[currency] || CURRENCIES.AED;
-  return `
-    <section class="sec" id="units-sec">
-      <h2>Units & Currency</h2>
-      <div class="panel pad" style="margin-top:10px;display:flex;flex-direction:column;gap:14px">
-        <div class="field" style="margin:0;position:relative">
-          <label for="set-currency">Currency (Type to search)</label>
-          <input type="text" id="set-currency" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="currency-options" value="${currency} - ${curObj.name}" autocomplete="off" spellcheck="false" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
-          <div id="currency-options" role="listbox" hidden style="position:absolute;z-index:50;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #0003;margin-top:4px"></div>
-          <p class="small muted" style="margin-top:6px">Selected: <b>${currency}</b> - ${curObj.name}</p>
-        </div>
-        <div class="field" style="margin:0">
-          <label for="set-distance">Distance Unit</label>
-          <select id="set-distance" data-type="distance" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
-            <option value="km" ${distance === 'km' ? 'selected' : ''}>Kilometres (km)</option>
-            <option value="mi" ${distance === 'mi' ? 'selected' : ''}>Miles (mi)</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0">
-          <label for="set-volume">Fuel Volume Unit</label>
-          <select id="set-volume" data-type="volume" style="width:100%;min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);font-size:15px">
-            <option value="L" ${volume === 'L' ? 'selected' : ''}>Litres (L)</option>
-            <option value="gal" ${volume === 'gal' ? 'selected' : ''}>US Gallons (gal)</option>
-          </select>
-        </div>
-      </div>
-    </section>
-  `;
-}
 function themeSection() {
   const theme = (S.cfg && S.cfg.theme) || 'system';
   return `
@@ -2213,6 +2056,28 @@ function payersSection() {
   `;
 }
 
+function unitsSection() {
+  const c = S.cfg || {}, code = c.currency || 'AED';
+  const opt = x => `<option value="${x[0]}"${x[0] === code ? ' selected' : ''}>${esc(x[0] === 'CUSTOM' ? 'Custom\u2026' : (x[1] && x[1] !== x[0] ? x[0] + ' (' + x[1] + ')' : x[0]) + ' \u2013 ' + x[2])}</option>`;
+  const seg = (k, curV, opts) => `<div class="seg" role="group">${opts.map(o => `<button type="button" data-act="set-unit" data-k="${k}" data-v="${o[0]}" aria-pressed="${curV === o[0]}">${o[1]}</button>`).join('')}</div>`;
+  return `
+    <section class="sec" id="units-sec">
+      <h2>Units &amp; Currency</h2>
+      <div class="panel pad" style="margin-top:10px;display:flex;flex-direction:column;gap:14px">
+        <div class="field" style="margin:0"><label for="u-cur">Currency</label>
+          <select id="u-cur">${CURRENCIES.map(opt).join('')}</select>
+          <div id="u-cur-custom" style="margin-top:8px" ${code === 'CUSTOM' ? '' : 'hidden'}><input id="u-sym" type="text" maxlength="6" placeholder="Symbol or code, e.g. Rs, KSh" value="${esc(c.curSym || '')}" autocomplete="off"></div>
+          <p class="small muted" style="margin-top:6px">Amounts will look like <b class="num" id="u-cur-prev">${esc(currSym())} ${fmt2(1250)}</b></p></div>
+        <div class="field" style="margin:0"><label>Distance</label>${seg('dist', distUnit(), [['km', 'Kilometres (km)'], ['mi', 'Miles (mi)']])}</div>
+        <div class="field" style="margin:0"><label>Fuel volume</label>${seg('vol', volUnit(), [['L', 'Litres (L)'], ['gal', 'US gallons'], ['galuk', 'UK gallons']])}</div>
+        <div class="field" style="margin:0"><label>Fuel economy</label>${seg('eco', ecoUnit(), [['kml', 'km/L'], ['l100', 'L/100 km'], ['mpg', 'mpg (US)'], ['mpguk', 'mpg (UK)']])}</div>
+        <div class="field" style="margin:0"><label>Number format</label>${seg('grp', c.grp === 'in' ? 'in' : 'intl', [['intl', '1,234,567'], ['in', '12,34,567']])}</div>
+        <p class="small muted">Your records are stored in km and litres underneath, so you can change these any time without changing or losing any data.</p>
+      </div>
+    </section>
+  `;
+}
+
 function viewData() {
   let h = carSelectionSection();
   h += payersSection();
@@ -2224,6 +2089,7 @@ function viewData() {
 }
 
 function sparkline(vals, avg) {
+  vals = vals.map(v => ecoVal(v)).filter(v => v != null); avg = ecoVal(avg);
   const n = vals.length; if (n < 2) return '';
   const w = 320, h = 100, p = 8, pr = 70;
   const mn = Math.floor(Math.min.apply(null, vals) - 0.5), mx = Math.ceil(Math.max.apply(null, vals) + 0.5);
@@ -2243,8 +2109,8 @@ function sparkline(vals, avg) {
 function fillRow(r) {
   const pcol = payerColor(r.b);
   const chip = `<span class="chip" style="color:${pcol};background:color-mix(in srgb,${pcol} 14%,var(--surface))">${esc(payerName(r.b))}</span>`;
-  const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : fmt0(dispDist(r.k)) + ' ' + getDistUnit() + (r.run != null && r.run > 0 ? ' &middot; +' + fmt0(dispDist(r.run)) + ' ' + getDistUnit() : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
-  const rt = r.rental ? '' : (r.avg != null ? fmt2(r.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : '&ndash;');
+  const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : kmTxt(r.k) + (r.run != null && r.run > 0 ? ' &middot; +' + kmTxt(r.run) : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
+  const rt = r.rental ? '' : (r.avg != null ? ecoTxt(r.avg) : '&ndash;');
   return `
     <button class="row" data-act="edit-fill" data-id="${esc(r.i)}">
       <span class="r1"><b>${fmtDate(r.d, true)}</b>${chip}<span class="amt">${fmt2(r.a)}</span></span>
@@ -2260,14 +2126,14 @@ function viewFuel() {
   }
   h += `
     <div class="stats">
-      <div class="panel stat"><b class="num">${c.avg != null ? fmt2(c.avg) : '&ndash;'}</b><span>${getDistUnit()}/${getVolUnit()} average</span></div>
-<div class="panel stat"><b class="num">${fmt0(dispDist(c.totalRun))}</b><span>${getDistUnit()} driven</span></div>
-      <div class="panel stat"><b class="num">${fmtCur(c.total)}</b><span>on fuel</span></div>
+      <div class="panel stat"><b class="num">${c.avg != null ? ecoNum(c.avg) : '&ndash;'}</b><span>${ecoName()} average</span></div>
+      <div class="panel stat"><b class="num">${kmNum(c.totalRun)}</b><span>${distUnit()} driven</span></div>
+      <div class="panel stat"><b class="num">${fmt0(c.total)}</b><span>${curCode()} on fuel</span></div>
     </div>
   `;
   const last = c.avgs.slice(-40);
   if (last.length > 1) {
-    h += `<section class="sec"><h2>${getDistUnit()}/${getVolUnit()}, last ${last.length} fill-ups</h2><div class="panel chartbox">${sparkline(last, c.avg)}</div></section>`;
+    h += `<section class="sec"><h2>${ecoName()}, last ${last.length} fill-ups</h2><div class="panel chartbox">${sparkline(last, c.avg)}</div></section>`;
   }
   h += `
     <div class="sec">
@@ -2287,11 +2153,11 @@ function viewFuel() {
     const order = allPayers().map(p => p.id).filter(id => by[id] > 0);
     Object.keys(by).forEach(id => { if (!order.includes(id) && by[id] > 0) order.push(id); });
     const payLine = filter === 'all' && order.length
-      ? `<div class="mh-pay num">${order.map(id => `<span><i style="background:${payerColor(id)}"></i>${esc(payerName(id))} ${fmtCur(by[id])}</span>`).join('')}</div>` : '';
+      ? `<div class="mh-pay num">${order.map(id => `<span><i style="background:${payerColor(id)}"></i>${esc(payerName(id))} ${currSym()} ${fmt2(by[id])}</span>`).join('')}</div>` : '';
     h += `
       <div class="mh">
         <b>${monthLabel(cur, true)}</b>
-        <span class="num">${fmtCur(tot)} &middot; ${buf.length} fill${buf.length > 1 ? 's' : ''}</span>
+        <span class="num">${currSym()} ${fmt2(tot)} &middot; ${buf.length} fill${buf.length > 1 ? 's' : ''}</span>
         ${payLine}
       </div>
       <div class="list">${buf.map(fillRow).join('')}</div>
@@ -2313,8 +2179,8 @@ function viewMoney() {
   h += `
     <div class="pending">
       <p class="muted small">Pending from ${esc(coN)} (${esc(car.name)})</p>
-      <div class="big num"><span class="cur">${getCurSym()}</span> ${fmt2(c.balance)}</div>
-      <p class="muted small num">${esc(coN)} Fuel ${fmtCur(c.comp)} &minus; Received ${fmtCur(c.received)}</p>
+      <div class="big num"><span class="cur">${currSym()}</span> ${fmt2(c.balance)}</div>
+      <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
       <button class="btn" data-act="add-pay" data-co="${esc(c.coId)}">Record payment</button>
     </div>
     <div style="margin-top:6px">${prevCompaniesHTML(c)}</div>
@@ -2373,23 +2239,23 @@ function viewService() {
 }
 
 const CAR_LOGO = `
-<svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
+<svg viewBox="0 0 96 96" width="68" height="68" aria-hidden="true">
   <defs>
-    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0F2230"/>
-      <stop offset="1" stop-color="#1B2E42"/>
+    <linearGradient id="carBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color:var(--company)"/>
+      <stop offset="1" style="stop-color:var(--company);stop-opacity:.72"/>
     </linearGradient>
   </defs>
-  <path d="M48 4 L88 16 V44 C88 70 72 86 48 92 C24 86 8 70 8 44 V16 Z" fill="#0F2230" stroke="#2C52C4" stroke-width="2"/>
-  <path d="M48 8 L84 19 V44 C84 68 70 82 48 88 C26 82 12 68 12 44 V19 Z" fill="url(#shieldGrad)"/>
-  <path d="M48 8 L84 19 V30 L48 19 L12 30 V19 Z" fill="#2C52C4" opacity="0.4"/>
-  <path d="M30 48 V32 C30 29 32 27 35 27 H42 C45 27 47 29 47 32 V48" stroke="#00C853" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <rect x="33" y="32" width="11" height="7" rx="1" fill="#00C853"/>
-  <path d="M32 62 L44 52 L52 56 L66 42" stroke="#FFC107" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M60 42 H66 V48" stroke="#FFC107" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="60" y="52" width="13" height="15" rx="2" stroke="#00C853" stroke-width="2" fill="none"/>
-  <path d="M63 60 L65 62 L69 57" stroke="#00C853" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="48" cy="74" r="3" fill="#FFC107" opacity="0.6"/>
+  <ellipse cx="48" cy="75" rx="34" ry="3.2" fill="#000" opacity=".18"/>
+  <path d="M24 47 L32.5 32.5 Q34.3 30 37.4 30 H59 Q62.1 30 63.9 32.5 L72 47 Z" fill="url(#carBody)"/>
+  <path d="M30.5 45 L36.2 35 Q36.9 34 38.2 34 H46 V45 Z" fill="var(--surface)" opacity=".92"/>
+  <path d="M50 34 H58.4 Q59.8 34 60.6 35.1 L66.2 45 H50 Z" fill="var(--surface)" opacity=".92"/>
+  <rect x="11" y="45" width="74" height="18" rx="7" fill="url(#carBody)"/>
+  <rect x="17" y="49" width="62" height="2" rx="1" fill="#fff" opacity=".28"/>
+  <rect x="80" y="50" width="5" height="5" rx="2" fill="#F7C948"/>
+  <rect x="11" y="50" width="4" height="5" rx="2" fill="#E5484D"/>
+  <circle cx="31" cy="64" r="9" fill="var(--ink)"/><circle cx="31" cy="64" r="3.8" fill="var(--surface)"/>
+  <circle cx="65" cy="64" r="9" fill="var(--ink)"/><circle cx="65" cy="64" r="3.8" fill="var(--surface)"/>
 </svg>`;
 
 function viewNoCar() {
@@ -2450,9 +2316,9 @@ function readFill() {
   return {
     d: $('#f-date', sheet).value,
     rental: $('#f-rental', sheet).checked,
-    k: toKm(parseNum($('#f-km', sheet).value)),
+    k: fromDist(parseNum($('#f-km', sheet).value)),
     a: parseNum($('#f-amt', sheet).value),
-    r: parseNum($('#f-rate', sheet).value),
+    r: fromRate(parseNum($('#f-rate', sheet).value)),
     b: by ? by.value : 'C'
   };
 }
@@ -2465,21 +2331,21 @@ function checkFill(f, id) {
   const idx = der.findIndex(x => x.i === key), me = der[idx];
   let err = null, kind = 'missing', text = '';
   if (f.a > 0 && f.r > 0) {
-        text = dispVol(me.litres || 0).toFixed(1) + ' ' + getVolUnit();
+    text = toVol(me.litres || 0).toFixed(1) + ' ' + volName();
     if (f.rental) text += ' \u00b7 rental vehicle';
-    else if (me.run > 0) { text += ' \u00b7 ' + fmt0(dispDist(me.run)) + ' ' + getDistUnit() + ' run' + (me.avg != null ? ' \u00b7 ' + fmt2(me.avg) + ' ' + getDistUnit() + '/' + getVolUnit() : ''); }
+    else if (me.run > 0) { text += ' \u00b7 ' + kmTxt(me.run) + ' run' + (me.avg != null ? ' \u00b7 ' + ecoTxt(me.avg) : ''); }
   }
   if (!f.rental && f.k > 0) {
-    if (me.run != null && me.run <= 0) { err = 'Odometer must be higher than previous fill (' + fmt0(dispDist(me.pk)) + ' ' + getDistUnit() + ').'; kind = 'order'; }
+    if (me.run != null && me.run <= 0) { err = 'Odometer must be higher than previous fill (' + kmTxt(me.pk) + ').'; kind = 'order'; }
     else {
       const nx = der.slice(idx + 1).find(x => !x.rental);
-      if (nx && nx.run != null && nx.run <= 0) { err = 'Odometer must be lower than next fill (' + fmt0(dispDist(nx.k)) + ' ' + getDistUnit() + ').'; kind = 'order'; }
+      if (nx && nx.run != null && nx.run <= 0) { err = 'Odometer must be lower than next fill (' + kmTxt(nx.k) + ').'; kind = 'order'; }
     }
   }
   if (!err) {
     if (!f.d) err = 'Please choose a date.';
     else if (!(f.a > 0)) err = 'Please enter amount paid.';
-    else if (!(f.r > 0)) err = 'Please enter rate per ' + (getVolUnit() === 'gal' ? 'gallon' : 'litre') + '.';
+    else if (!(f.r > 0)) err = 'Please enter rate per ' + volWord() + '.';
     else if (!f.rental && !(f.k > 0)) err = 'Please enter odometer reading.';
   }
   return { err, kind, text };
@@ -2509,14 +2375,13 @@ function fillSheet(id) {
   const lastRow = C && C.lastReal, anyRow = (car.fills || []).length ? sortFills(car.fills).slice(-1)[0] : null;
   const v = ex || { d: today(), k: null, a: null, r: anyRow ? anyRow.r : 2.57, b: activeCoId() };
   const rental = !!ex && ex.k == null;
-    const fuelLabel = (car.fuelType === 'ev') ? 'Rate/kWh' : `Rate/${getVolUnit()}`;
   openSheet('fill', id, ex ? 'Edit fill-up' : 'Add fill-up', `
     <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${esc(v.d)}"></div>
     <label class="check"><input type="checkbox" id="f-rental" ${rental ? 'checked' : ''}> Rental vehicle (No odometer)</label>
-    <div class="field" id="f-km-wrap"><label for="f-km">Odometer (${getDistUnit()})</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + fmt0(dispDist(lastRow.k)) : ''}" value="${v.k == null ? '' : esc(dispDist(v.k))}">${scanRow('odo', 'Scan odometer')}</div>
+    <div class="field" id="f-km-wrap"><label for="f-km">Odometer (${distUnit()})</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + kmNum(lastRow.k) : ''}" value="${v.k == null ? '' : esc(distIn(v.k))}">${scanRow('odo', 'Scan odometer')}</div>
     <div class="two">
-      <div class="field"><label for="f-amt">Amount (${getCurSym()})</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
-      <div class="field"><label for="f-rate">${fuelLabel}</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(v.r)}"></div>
+      <div class="field"><label for="f-amt">Amount (${curCode()})</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
+      <div class="field"><label for="f-rate">Rate/${volLong()}</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(rateIn(v.r))}"></div>
     </div>
     <div style="margin:-6px 0 14px">${scanRow('bill', 'Scan bill')}</div>
     <fieldset class="field"><legend>Paid by</legend>
@@ -2545,7 +2410,7 @@ function saveFill() {
   const id = sheet.dataset.id || null, f = readFill(), res = checkFill(f, id);
   if (res.err) { const el = $('#f-preview', sheet); el.className = 'preview err'; el.textContent = res.err; return; }
   const car = getActiveCar();
-  const row = { i: id || ('f' + uid()), d: f.d, k: f.rental ? null : Math.round(f.k), a: r2(f.a), r: f.r, b: f.b };
+  const row = { i: id || ('f' + uid()), d: f.d, k: f.rental ? null : Math.round(f.k * 1000) / 1000, a: r2(f.a), r: f.r, b: f.b };
   car.fills = sortFills(id ? car.fills.map(x => x.i === id ? row : x) : car.fills.concat([row]));
   persistAll(); closeSheet(); render(); toast(id ? 'Fill-up updated successfully' : 'Fill-up saved successfully');
 }
@@ -2658,14 +2523,14 @@ function ocrNums(text) {
 function ocrParseBill(text) {
   const t = (text || '').replace(/(\d)[Oo]|[Oo](?=\d)/g, (mm, d) => d ? d + '0' : '0');
   const nums = ocrNums(t);
-  const KW_A = /(total|amount|net|payable|sale|grand)/i, KW_L = /(vol|litre|liter|ltr|qty|quantity|\bl\b)/i, KW_R = /(rate|price|unit|per\s*l|\/\s*l|aed\s*\/)/i;
+  const KW_A = /(total|amount|net|payable|sale|grand)/i, KW_L = /(vol|litre|liter|ltr|gal|qty|quantity|\bl\b)/i, KW_R = /(rate|price|unit|per\s*(l|gal)|\/\s*(l|gal)|\/\s*litre)/i;
   const kwScore = (n, re) => re.test(n.text) ? 1 : 0;
   let best = null;
   const cand = nums.filter(n => n.dec >= 2);
   for (const a of cand) for (const l of cand) {
-    if (a === l || a.v < 5 || a.v > 2000 || l.v < 1 || l.v > 200) continue;
+    if (a === l || a.v < 3 || a.v > 300000 || l.v < 1 || l.v > 400) continue;
     for (const r of cand) {
-      if (r === a || r === l || r.v < 1 || r.v > 15) continue;
+      if (r === a || r === l || r.v < 0.3 || r.v > 2000) continue;
       const calc = l.v * r.v, tol = Math.max(0.12, a.v * 0.008);
       const err = Math.abs(calc - a.v);
       if (err > tol) continue;
@@ -3048,7 +2913,7 @@ function scanProgress(kind) {
   };
 }
 function scanThumbHtml(cv) { const t = ocrThumb(cv); return t ? '<img class="scan-thumb" alt="Scanned photo" src="' + t + '">' : ''; }
-function scanLastOdo() { const car = getActiveCar(), lr = C && C.lastReal; return Math.max((lr && lr.k) || 0, (car && car.odometer) || 0); }
+function scanLastOdo() { const car = getActiveCar(), lr = C && C.lastReal; return Math.round(toDist(Math.max((lr && lr.k) || 0, (car && car.odometer) || 0))); }
 
 /* ----- odometer ----- */
 async function scanOdoCrop(img, rect, kind) {
@@ -3086,7 +2951,7 @@ async function scanOdoCrop(img, rect, kind) {
   }
   scanField('#f-km', String(good[0].val));
   const chips = good.slice(1, 3).map(c => '<button type="button" class="scan-chip" data-act="scan-use" data-target="#f-km" data-val="' + c.val + '">' + fmt0(c.val) + '</button>').join('');
-  scanSet(kind, '<div class="scanwrap">' + scanThumbHtml(crop.cv) + '<div>Read <b>' + fmt0(good[0].val) + ' km</b>. Please check it against your dashboard.' +
+  scanSet(kind, '<div class="scanwrap">' + scanThumbHtml(crop.cv) + '<div>Read <b>' + fmt0(good[0].val) + ' ' + distUnit() + '</b>. Please check it against your dashboard.' +
     (chips ? '<div class="scan-chips"><span class="muted">Other possibilities:</span>' + chips + '</div>' : '') + '</div></div>');
 }
 async function runOdoScan(file) {
@@ -3127,7 +2992,7 @@ async function scanBill(img, worker, kind) {
   const parts = [];
   if (res.amount > 0) { scanField('#f-amt', res.amount.toFixed(2)); parts.push('Amount <b>' + res.amount.toFixed(2) + '</b>'); }
   if (res.rate > 0) { scanField('#f-rate', String(res.rate)); parts.push('Rate <b>' + res.rate + '</b>'); }
-  if (res.litres > 0) parts.push(res.litres + ' L');
+  if (res.litres > 0) parts.push(res.litres + ' ' + volName());
   const missing = !(res.amount > 0) ? 'Amount not found, please type it.' : (!(res.rate > 0) ? 'Rate not found, please type it.' : '');
   scanSet(kind, '<div class="scanwrap">' + scanThumbHtml(big.cv) + '<div>Read from bill: ' + parts.join(' &middot; ') + '. Please check it against the bill.' +
     (res.how === 'keywords' ? ' <span class="muted">Some values were worked out from the bill, so double-check them.</span>' : '') +
@@ -3160,7 +3025,7 @@ function paySheet(id, coPref) {
   openSheet('pay', id, ex ? 'Edit payment' : 'Record payment', `
     ${coField}
     <div class="field"><label for="p-date">Date received</label><input id="p-date" type="date" value="${esc(v.d)}"></div>
-    <div class="field"><label for="p-amt">Amount (${getCurSym()})</label><input id="p-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
+    <div class="field"><label for="p-amt">Amount (${curCode()})</label><input id="p-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
     <div class="field"><label for="p-note">Note / Ref (optional)</label><input id="p-note" type="text" maxlength="80" value="${esc(v.n || '')}"></div>
     <p id="p-msg" class="preview" aria-live="polite"></p>
     <div class="actions">
@@ -3211,8 +3076,8 @@ function svcDoneSheet(id) {
   if (svcIsEntry(it) || svcIsDate(it)) return entryDoneSheet(it);
   const c = svcCalc(it);
   openSheet('svc-done', id, it.n + ' Done', `
-    <div class="field"><label for="s-km">Odometer at service (${getDistUnit()})</label><input id="s-km" type="text" inputmode="numeric" value="${C.odo == null ? '' : esc(dispDist(C.odo))}"></div>
-    <div class="field"><label for="s-int">Next due after (${getDistUnit()} interval)</label><input id="s-int" type="text" inputmode="numeric" value="${esc(c ? dispDist(c.last.i) : 5000)}"></div>
+    <div class="field"><label for="s-km">Odometer at service (${distUnit()})</label><input id="s-km" type="text" inputmode="numeric" value="${C.odo == null ? '' : esc(distIn(C.odo))}"></div>
+    <div class="field"><label for="s-int">Next due after (${distUnit()} interval)</label><input id="s-int" type="text" inputmode="numeric" value="${esc(distIn(c ? c.last.i : 5000))}"></div>
     <p id="s-msg" class="preview" aria-live="polite"></p>
     <div class="actions"><button class="btn" data-act="save-svc-done">Save</button></div>
   `);
@@ -3220,13 +3085,13 @@ function svcDoneSheet(id) {
 
 function saveSvcDone() {
   { const it0 = svcById(sheet.dataset.id); if (svcIsEntry(it0) || svcIsDate(it0)) return saveEntryDone(it0); }
-  const id = sheet.dataset.id, it = svcById(id), km = toKm(parseNum($('#s-km', sheet).value)), iv = toKm(parseNum($('#s-int', sheet).value)), msg = $('#s-msg', sheet);
+  const id = sheet.dataset.id, it = svcById(id), km = fromDist(parseNum($('#s-km', sheet).value)), iv = fromDist(parseNum($('#s-int', sheet).value)), msg = $('#s-msg', sheet);
   const c = svcCalc(it);
   if (!(km > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter odometer reading.'; return; }
-  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter service interval in ' + getDistUnit() + '.'; return; }
-  if (c && km <= c.last.k) { msg.className = 'preview err'; msg.textContent = 'Odometer must be higher than last service (' + fmt0(dispDist(c.last.k)) + ' ' + getDistUnit() + ').'; return; }
+  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter service interval in ' + distUnit() + '.'; return; }
+  if (c && km <= c.last.k) { msg.className = 'preview err'; msg.textContent = 'Odometer must be higher than last service (' + kmTxt(c.last.k) + ').'; return; }
   const car = getActiveCar();
-  car.service = car.service.map(x => x.i === id ? Object.assign({}, x, { h: x.h.concat([{ k: Math.round(km), i: Math.round(iv) }]) }) : x);
+  car.service = car.service.map(x => x.i === id ? Object.assign({}, x, { h: x.h.concat([{ k: km, i: iv }]) }) : x);
   persistAll(); closeSheet(); render(); toast(it.n + ' marked as completed');
 }
 
@@ -3271,7 +3136,7 @@ function svcEditSheet(id) {
   const c = svcCalc(it);
   openSheet('svc-edit', id, 'Edit ' + it.n, `
     <div class="field"><label for="e-name">Service Name</label><input id="e-name" type="text" maxlength="40" value="${esc(it.n)}"></div>
-    <div class="field"><label for="e-int">Interval for next service (${getDistUnit()})</label><input id="e-int" type="text" inputmode="numeric" value="${esc(dispDist(c ? c.last.i : 5000))}"></div>
+    <div class="field"><label for="e-int">Interval for next service (${distUnit()})</label><input id="e-int" type="text" inputmode="numeric" value="${esc(distIn(c ? c.last.i : 5000))}"></div>
     <p id="e-msg" class="preview" aria-live="polite"></p>
     <div class="actions">
       <button class="btn" data-act="save-svc-edit">Save</button>
@@ -3283,15 +3148,15 @@ function svcEditSheet(id) {
 
 function saveSvcEdit() {
   { const it0 = svcById(sheet.dataset.id); if (svcIsEntry(it0) || svcIsDate(it0)) return saveEntryEdit(it0); }
-  const id = sheet.dataset.id, name = $('#e-name', sheet).value.trim(), iv = toKm(parseNum($('#e-int', sheet).value)), msg = $('#e-msg', sheet);
+  const id = sheet.dataset.id, name = $('#e-name', sheet).value.trim(), iv = fromDist(parseNum($('#e-int', sheet).value)), msg = $('#e-msg', sheet);
   if (!name) { msg.className = 'preview err'; msg.textContent = 'Please enter a name.'; return; }
-  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter the interval in ' + getDistUnit() + '.'; return; }
+  if (!(iv > 0)) { msg.className = 'preview err'; msg.textContent = 'Please enter the interval in ' + distUnit() + '.'; return; }
   const car = getActiveCar();
   car.service = car.service.map(x => {
     if (x.i !== id) return x;
     const h = x.h.slice().sort((a, b) => a.k - b.k);
     const l = h.length - 1;
-    h[l] = { k: h[l].k, i: Math.round(iv) };
+    h[l] = { k: h[l].k, i: iv };
     return Object.assign({}, x, { n: name, h });
   });
   persistAll(); closeSheet(); render(); toast('Reminder updated');
@@ -3304,11 +3169,11 @@ function svcAddSheet() {
     <div class="field"><label for="a-name">Service Type</label><input id="a-name" type="text" maxlength="40" placeholder="e.g. Oil change, Plug change"></div>
     <div id="a-rbox">
       <div class="field"><label for="a-by">Remind by</label>
-        <select id="a-by"><option value="k">${getDistUnit() === 'mi' ? 'Miles (mi)' : 'Kilometres (km)'}</option><option value="d">Date (days or months)</option></select></div>
-<div class="two" id="a-km-box">
-  <div class="field"><label for="a-int">Every (${getDistUnit()} interval)</label><input id="a-int" type="text" inputmode="numeric" placeholder="e.g. ${getDistUnit() === 'mi' ? '6000' : '10000'}"></div>
-  <div class="field"><label for="a-km">Last done at (${getDistUnit()})</label><input id="a-km" type="text" inputmode="numeric" value="${C && C.odo != null ? esc(dispDist(C.odo)) : ''}"></div>
-</div>
+        <select id="a-by"><option value="k">${distUnit() === 'mi' ? 'Miles (mi)' : 'Kilometres (km)'}</option><option value="d">Date (days or months)</option></select></div>
+      <div class="two" id="a-km-box">
+        <div class="field"><label for="a-int">Every (${distUnit()} interval)</label><input id="a-int" type="text" inputmode="numeric" placeholder="e.g. 10000"></div>
+        <div class="field"><label for="a-km">Last done at (${distUnit()})</label><input id="a-km" type="text" inputmode="numeric" value="${C && C.odo != null ? esc(distIn(C.odo)) : ''}"></div>
+      </div>
       <div id="a-date-box" hidden>
         <div class="two">
           <div class="field"><label for="a-ev">Every</label><input id="a-ev" type="text" inputmode="numeric" placeholder="e.g. 6"></div>
@@ -3358,22 +3223,11 @@ function saveSvcAdd() {
     car.service = (car.service || []).concat([{ i: 's' + uid(), n: name, t: 'd', v: ev, u: eu, h: [{ d: ld }] }]);
     persistAll(); closeSheet(); render(); toast('Service reminder added'); return;
   }
-  const iv = toKm(parseNum($('#a-int', sheet).value)), km = toKm(parseNum($('#a-km', sheet).value));
-  if (!(iv > 0)) return bad('Please enter the interval in ' + getDistUnit() + '.');
+  const iv = fromDist(parseNum($('#a-int', sheet).value)), km = fromDist(parseNum($('#a-km', sheet).value));
+  if (!(iv > 0)) return bad('Please enter the interval in ' + distUnit() + '.');
   if (!(km >= 0)) return bad('Please enter the odometer reading for last service.');
-  car.service = (car.service || []).concat([{ i: 's' + uid(), n: name, h: [{ k: Math.round(km), i: Math.round(iv) }] }]);
+  car.service = (car.service || []).concat([{ i: 's' + uid(), n: name, h: [{ k: km, i: iv }] }]);
   persistAll(); closeSheet(); render(); toast('Service reminder added');
-}
-
-/* ---------- CURRENCY SEARCH DROPDOWN ---------- */
-function updateCurrencyOptions(query) {
-  const box = $('#currency-options'), input = $('#set-currency');
-  if (!box || !input) return;
-  const q = String(query || '').trim().toLowerCase();
-  const matches = Object.keys(CURRENCIES).filter(code => !q || code.toLowerCase().includes(q) || CURRENCIES[code].name.toLowerCase().includes(q)).slice(0, 80);
-  box.innerHTML = matches.length ? matches.map(code => `<button type="button" role="option" data-act="currency-pick" data-code="${code}" style="display:block;width:100%;text-align:left;padding:11px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;cursor:pointer"> <b>${code}</b> - ${esc(CURRENCIES[code].name)}</button>`).join('') : '<div class="small muted" style="padding:12px">No matching currency found</div>';
-  box.hidden = false;
-  input.setAttribute('aria-expanded', 'true');
 }
 
 /* ---------- EVENT DELEGATION ---------- */
@@ -3382,44 +3236,7 @@ const H = {
   filter: el => { filter = el.dataset.f; render(); },
   'toggle-pay': () => { showAllPay = !showAllPay; render(); },
   'set-theme': el => setTheme(el.dataset.theme),
-  'currency-pick': el => {
-    const code = el.dataset.code;
-    if (!CURRENCIES[code]) return;
-    S.cfg.currency = code; persistAll(); render(); toast('Currency updated');
-  },
 
-  'set-unit': el => {
-    const type = el.dataset.type, val = (el.value || '').trim();
-    if (type === 'currency') {
-      // Accept a currency code, full label, or a partial currency name.
-      const query = val.toLowerCase().trim();
-      let code = query.toUpperCase();
-      if (!CURRENCIES[code]) {
-        const labelCode = query.match(/^([a-z]{3})\s*[-–]/i);
-        if (labelCode && CURRENCIES[labelCode[1].toUpperCase()]) code = labelCode[1].toUpperCase();
-      }
-      if (!CURRENCIES[code]) {
-        const found = Object.keys(CURRENCIES).find(k =>
-          CURRENCIES[k].name.toLowerCase() === query ||
-          CURRENCIES[k].name.toLowerCase().includes(query)
-        );
-        if (found) code = found;
-      }
-      if (CURRENCIES[code]) {
-        S.cfg.currency = code;
-      } else {
-        toast('Currency not found: ' + val);
-        render();
-        return;
-      }
-    }
-    if (type === 'distance') S.cfg.distance = val;
-    if (type === 'volume') S.cfg.volume = val;
-    persistAll();
-    render();
-    toast('Units updated');
-  },
-  
   // Custom payers
   'payer-new-toggle': () => {
     const box = $('#f-payer-add', sheet); if (!box) return;
@@ -3533,6 +3350,18 @@ const H = {
     $('#' + p + '-vt', sheet).value = t;
     const w = $('#' + p + '-vn-wrap', sheet);
     if (w) { w.hidden = t !== 'custom'; if (t === 'custom') $('#' + p + '-vn', sheet).focus(); }
+  },
+  'set-unit': el => {
+    const k = el.dataset.k, v = el.dataset.v;
+    if (['dist', 'vol', 'eco', 'grp'].indexOf(k) < 0) return;
+    S.cfg[k] = v;
+    if (k === 'dist' || k === 'vol') {            // suggest the matching fuel economy unit
+      const d = distUnit(), vo = volUnit();
+      if (d === 'mi' && vo === 'gal') S.cfg.eco = 'mpg';
+      else if (d === 'mi' && vo === 'galuk') S.cfg.eco = 'mpguk';
+      else if (d === 'km' && vo === 'L') S.cfg.eco = 'kml';
+    }
+    rebuildNF(); persistAll(); render();
   },
   'add-car-prompt': () => addCarSheet(),
   'save-new-car': () => saveNewCar(),
@@ -3679,30 +3508,6 @@ document.addEventListener('click', e => {
   if (b && H[b.dataset.act]) H[b.dataset.act](b, e);
 });
 
-document.addEventListener('input', e => {
-  if (e.target && e.target.id === 'set-currency') updateCurrencyOptions(e.target.value);
-});
-document.addEventListener('focusin', e => {
-  if (e.target && e.target.id === 'set-currency') updateCurrencyOptions('');
-});
-document.addEventListener('keydown', e => {
-  if (e.target && e.target.id === 'set-currency') {
-    if (e.key === 'Escape') { const box = $('#currency-options'); if (box) box.hidden = true; e.target.setAttribute('aria-expanded', 'false'); }
-    if (e.key === 'Enter') { e.preventDefault(); const first = $('#currency-options [data-code]'); if (first) H['currency-pick'](first); }
-  }
-});
-document.addEventListener('change', e => {
-  const el = e.target;
-  if (el && el.matches && el.matches('select[data-type="distance"], select[data-type="volume"]')) H['set-unit'](el, e);
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('#set-currency, #currency-options')) {
-    const box = $('#currency-options'), input = $('#set-currency');
-    if (box) box.hidden = true;
-    if (input) input.setAttribute('aria-expanded', 'false');
-  }
-});
-
 $('#excel-file-input').addEventListener('change', importFromExcel);
 $('#json-restore-input').addEventListener('change', restoreFromJson);
 
@@ -3728,6 +3533,18 @@ document.addEventListener('visibilitychange', () => {
 if (syncEnabled()) {
   document.addEventListener('click', () => { if (syncEnabled() && !tokenValid()) syncNow(true); }, { once: true, capture: true });
 }
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t && t.id === 'u-cur') { S.cfg.currency = t.value; persistAll(); render(); }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t && t.id === 'u-sym') {
+    S.cfg.curSym = t.value.slice(0, 6); persistAll();
+    const p = $('#u-cur-prev'); if (p) p.textContent = currSym() + ' ' + fmt2(1250);
+  }
+});
 
 initApp();
 })();
