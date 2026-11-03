@@ -2301,25 +2301,7 @@ function viewService() {
   return h;
 }
 
-const CAR_LOGO = `
-<svg viewBox="0 0 96 96" width="68" height="68" aria-hidden="true">
-  <defs>
-    <linearGradient id="carBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" style="stop-color:var(--company)"/>
-      <stop offset="1" style="stop-color:var(--company);stop-opacity:.72"/>
-    </linearGradient>
-  </defs>
-  <ellipse cx="48" cy="75" rx="34" ry="3.2" fill="#000" opacity=".18"/>
-  <path d="M24 47 L32.5 32.5 Q34.3 30 37.4 30 H59 Q62.1 30 63.9 32.5 L72 47 Z" fill="url(#carBody)"/>
-  <path d="M30.5 45 L36.2 35 Q36.9 34 38.2 34 H46 V45 Z" fill="var(--surface)" opacity=".92"/>
-  <path d="M50 34 H58.4 Q59.8 34 60.6 35.1 L66.2 45 H50 Z" fill="var(--surface)" opacity=".92"/>
-  <rect x="11" y="45" width="74" height="18" rx="7" fill="url(#carBody)"/>
-  <rect x="17" y="49" width="62" height="2" rx="1" fill="#fff" opacity=".28"/>
-  <rect x="80" y="50" width="5" height="5" rx="2" fill="#F7C948"/>
-  <rect x="11" y="50" width="4" height="5" rx="2" fill="#E5484D"/>
-  <circle cx="31" cy="64" r="9" fill="var(--ink)"/><circle cx="31" cy="64" r="3.8" fill="var(--surface)"/>
-  <circle cx="65" cy="64" r="9" fill="var(--ink)"/><circle cx="65" cy="64" r="3.8" fill="var(--surface)"/>
-</svg>`;
+const CAR_LOGO = `<img src="./logo.png" alt="Vehicle Log Logo" style="width: 96px; height: 96px; object-fit: contain; border-radius: 50%;">`;
 
 function viewNoCar() {
   const st = syncState(), cid = syncClientId();
@@ -2330,7 +2312,7 @@ function viewNoCar() {
   else third = `<button class="btn" data-act="sync-signin" style="${bs}"><svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.72-.06-1.42-.18-2.09H12v3.95h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.25z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.29v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.54 13.84A5.86 5.86 0 0 1 6.23 12c0-.64.11-1.26.31-1.84V7.63H3.29A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.04 4.37l3.25-2.53z"/><path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.14 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.71 5.38l3.25 2.53C7.31 7.85 9.46 6.13 12 6.13z"/></svg>Sign in with Google</button>`;
   return `
     <section class="panel empty" style="margin-top:10px;padding:34px 16px">
-      <div style="width:96px;height:96px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--company) 14%,transparent)">${CAR_LOGO}</div>
+      <div style="width:110px;height:110px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">${CAR_LOGO}</div>
       <h2 style="margin-bottom:8px">No vehicle added yet</h2>
       <p class="muted">Add your vehicle for history</p>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:20px">
