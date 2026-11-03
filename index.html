@@ -74,19 +74,19 @@ h2{font:600 18px/1.2 var(--font-display)}
 .num{font-variant-numeric:tabular-nums}
 
 /* Odometer */
-.odo{background:var(--housing);border-radius:20px;padding:18px 16px;color:#C3D0D9}
-.odo-label{font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between}
-.odo-digits{display:flex;align-items:flex-end;gap:3px;flex-wrap:wrap}
-.drum{position:relative;flex:0 1 36px;min-width:0;height:58px;overflow:hidden;background:#04090D;border-radius:6px;box-shadow:inset 0 0 0 1px #2B3A46}
-.drum.gap{margin-left:8px}
+.odo{background:var(--housing);border-radius:20px;padding:22px 16px;color:#C3D0D9}
+.odo-label{font-size:14px;margin-bottom:14px;display:flex;justify-content:space-between}
+.odo-digits{display:flex;align-items:flex-end;justify-content:center;gap:4px;flex-wrap:wrap}
+.drum{position:relative;flex:0 0 auto;width:48px;height:70px;overflow:hidden;background:#04090D;border-radius:8px;box-shadow:inset 0 0 0 1px #2B3A46}
+.drum.gap{margin-left:10px}
 .drum::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.65),rgba(0,0,0,0) 32%,rgba(0,0,0,0) 68%,rgba(0,0,0,.65))}
-.strip{display:block;transform:translateY(calc(var(--d) * -58px))}
-.strip i{display:block;height:58px;font:600 36px/58px var(--font-display);text-align:center;color:#F2F6F8;font-style:normal}
+.strip{display:block;transform:translateY(calc(var(--d) * -70px))}
+.strip i{display:block;height:70px;font:600 44px/70px var(--font-display);text-align:center;color:#F2F6F8;font-style:normal}
 .strip.roll{animation:roll 1.2s cubic-bezier(.16,.8,.24,1) both;animation-delay:calc(var(--i) * 80ms)}
-@keyframes roll{from{transform:translateY(0)}to{transform:translateY(calc(var(--d) * -58px))}}
-.odo-unit{margin-left:8px;font:500 18px var(--font-display);padding-bottom:9px}
-.odo-meta{margin-top:12px;font-size:14px}
-.odo .btn{margin-top:14px;width:100%}
+@keyframes roll{from{transform:translateY(0)}to{transform:translateY(calc(var(--d) * -70px))}}
+.odo-unit{margin-left:8px;font:600 20px var(--font-display);padding-bottom:12px;color:#C3D0D9}
+.odo-meta{margin-top:14px;font-size:14px;text-align:center}
+.odo .btn{margin-top:16px;width:100%}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:12px;border:1.5px solid transparent;background:var(--btn);color:var(--btn-ink);font-weight:600}
@@ -346,7 +346,7 @@ function currSym() {                                  // the symbol shown before
   const c = (S.cfg && S.cfg.currency) || 'AED';
   if (c === 'CUSTOM') return (S.cfg.curSym || '').trim() || '\u00a4';
   const f = CURRENCIES.find(x => x[0] === c);
-  return f ? f[1] : c;
+  return f ? f[1] : 'AED'; 
 }
 const distUnit = () => (S.cfg && S.cfg.dist === 'mi') ? 'mi' : 'km';
 const toDist = km => (km == null || !isFinite(km)) ? km : (distUnit() === 'mi' ? km / KM_PER_MI : km);
@@ -356,13 +356,32 @@ const kmTxt = km => fmt0(toDist(km)) + ' ' + distUnit();
 const distWord = () => distUnit() === 'mi' ? 'miles' : 'kilometres';
 const volUnit = () => { const v = S.cfg && S.cfg.vol; return (v === 'gal' || v === 'galuk') ? v : 'L'; };
 const litresPer = () => ({ L: 1, gal: L_PER_USGAL, galuk: L_PER_UKGAL })[volUnit()];
-const volName = () => ({ L: 'L', gal: 'US gal', galuk: 'UK gal' })[volUnit()];
+const volName = () => {
+  const car = getActiveCar();
+  if (car && car.fuelType === 'ev') return 'kWh';
+  return ({ L: 'L', gal: 'US gal', galuk: 'UK gal' })[volUnit()];
+};
 const volLong = () => ({ L: 'Litre', gal: 'US Gallon', galuk: 'UK Gallon' })[volUnit()];
 const volPlural = () => ({ L: 'Litres', gal: 'US Gallons', galuk: 'UK Gallons' })[volUnit()];
 const volWord = () => ({ L: 'litre', gal: 'US gallon', galuk: 'UK gallon' })[volUnit()];
-const toVol = l => (l == null || !isFinite(l)) ? l : l / litresPer();
-const toRate = r => (r == null || !isFinite(r)) ? r : r * litresPer();            // price per litre -> price per shown unit
-const fromRate = x => (x == null || !isFinite(x)) ? x : Math.round((x / litresPer()) * 100000) / 100000;
+const toVol = l => {
+  if (l == null || !isFinite(l)) return l;
+  const car = getActiveCar();
+  if (car && car.fuelType === 'ev') return l;
+  return l / litresPer();
+};
+const toRate = r => {
+  if (r == null || !isFinite(r)) return r;
+  const car = getActiveCar();
+  if (car && car.fuelType === 'ev') return r; // EV ke liye rate change nahi hoga (per kWh hi rahega)
+  return r * litresPer();
+};
+const fromRate = x => {
+  if (x == null || !isFinite(x)) return x;
+  const car = getActiveCar();
+  if (car && car.fuelType === 'ev') return x; // EV ke liye rate change nahi hoga
+  return Math.round((x / litresPer()) * 100000) / 100000;
+};
 const rateIn = r => (r == null ? '' : String(+toRate(r).toFixed(3)));
 const distIn = km => (km == null ? '' : String(Math.round(toDist(km))));
 const ecoUnit = () => { const e = S.cfg && S.cfg.eco; return (e === 'l100' || e === 'mpg' || e === 'mpguk') ? e : 'kml'; };
@@ -645,7 +664,14 @@ function derive(rows) {
     const rental = f.k == null;
     let run = null, avg = null, pk = prevK;
     if (!rental) {
-      if (prevK != null) { run = f.k - prevK; if (litres > 0 && run > 0) avg = run / litres; }
+            if (prevK != null) { 
+        run = f.k - prevK; 
+        if (litres > 0 && run > 0) {
+          // Base average calculate karo (run / litres)
+          // EV ke case me litres ka matlab kWh hai, toh run/kWh automatic ban jayega
+          avg = run / litres; 
+        } 
+      }
       prevK = f.k;
     }
     const days = prevD ? dayNum(f.d) - dayNum(prevD) : null;
@@ -848,7 +874,11 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, dashWS, "VEHICLE MAINTENANCE DASHBOARD");
 
   /* --- Sheet 2: Fuel Log --- */
-  const fillsHeader = [["ID", "Date", `Odometer (${distUnit()})`, `Amount (${curCode()})`, `Rate/${volLong()}`, "Paid By (C/S)", volPlural(), `${distUnit() === 'mi' ? 'Miles' : 'Km'} Driven`, `${distUnit()}/${volName()} Average`]];
+  const evCar = car.fuelType === 'ev';
+    const excelVolLong = evCar ? 'kWh' : ({ L: 'Litre', gal: 'US Gallon', galuk: 'UK Gallon' })[volUnit()];
+  const excelVolPlural = evCar ? 'kWh' : ({ L: 'Litres', gal: 'US Gallons', galuk: 'UK Gallons' })[volUnit()];
+  const excelVolName = evCar ? 'kWh' : ({ L: 'L', gal: 'US gal', galuk: 'UK gal' })[volUnit()];
+  const fillsHeader = [["ID", "Date", `Odometer (${distUnit()})`, `Amount (${curCode()})`, `Rate/${excelVolLong}`, "Paid By (C/S)", excelVolPlural, `${distUnit() === 'mi' ? 'Miles' : 'Km'} Driven`, `${distUnit()}/${excelVolName} Average`]];
   const fillsData = (car.fills || []).map((f, i) => {
     const rowNum = i + 2;
     return [
@@ -856,7 +886,7 @@ function exportToExcel() {
       f.d,
       f.k != null ? Math.round(toDist(f.k) * 100) / 100 : '',
       f.a,
-      Math.round(toRate(f.r) * 10000) / 10000,
+            Math.round((f.r * (car.fuelType === 'ev' ? 1 : litresPer())) * 10000) / 10000,
       (f.b === 'C' || f.b === 'S') ? f.b : payerName(f.b),
       { f: `IF(E${rowNum}>0, D${rowNum}/E${rowNum}, 0)` },
       { f: `IF(AND(ISNUMBER(C${rowNum}), ISNUMBER(C${rowNum - 1})), C${rowNum}-C${rowNum - 1}, "")` },
@@ -987,7 +1017,7 @@ function importFromExcel(e) {
               d: parseExcelDate(dateVal),
               k: kmOf(parseNum(odoVal)),
               a: parseNum(amtVal) || 0,
-              r: parseNum(rateVal) ? Math.round((parseNum(rateVal) / fileU.vol) * 100000) / 100000 : 2.57,
+              r: parseNum(rateVal) ? Math.round(((parseNum(rateVal) / fileU.vol) * (car.fuelType === 'ev' ? litresPer() : 1)) * 100000) / 100000 : 2.57,
               b: resolvePayer(byVal)
             };
           }).filter(f => f.a > 0);
@@ -1412,9 +1442,9 @@ function exportPdfReport(fromDate, toDate) {
         <td>${fmtDate(f.d, true)}</td>
         <td class="num">${f.rental ? 'Rental' : kmTxt(f.k)}</td>
         <td class="num">${currSym()} ${fmt2(f.a)}</td>
-        <td class="num">${f.r ? fmt2(toRate(f.r)) : '-'}</td>
+                <td class="num">${f.r ? (car.fuelType === 'ev' ? fmt2(f.r) : fmt2(toRate(f.r))) : '-'}</td>
         <td>${esc(payerName(f.b))}</td>
-        <td class="num">${f.avg != null ? ecoTxt(f.avg) : '-'}</td>
+        <td class="num">${f.avg != null ? (car.fuelType === 'ev' ? fmt2(f.avg) + ' km/kWh' : ecoTxt(f.avg)) : '-'}</td>
       </tr>
     `;
   });
@@ -1485,9 +1515,9 @@ function exportPdfReport(fromDate, toDate) {
             <th>Date</th>
             <th class="num">Odometer</th>
             <th class="num">Amount</th>
-            <th class="num">Rate/${volName()}</th>
+            <th class="num">Rate/${car.fuelType === 'ev' ? 'kWh' : (car.fuelType === 'custom' ? car.fuelCustom : volName())}</th>
             <th>Paid By</th>
-            <th class="num">Avg ${ecoName()}</th>
+            <th class="num">Avg ${car.fuelType === 'ev' ? 'km/kWh' : (car.fuelType === 'custom' ? 'km/' + car.fuelCustom : ecoName())}</th>
           </tr>
         </thead>
         <tbody>
@@ -1585,6 +1615,10 @@ const VT_TYPES = [
   { id: 'bike', n: 'Bike' }, { id: 'car', n: 'Car' }, { id: 'suv', n: 'SUV' },
   { id: 'truck', n: 'Truck' }, { id: 'taxi', n: 'Taxi' }, { id: 'custom', n: 'Custom' }
 ];
+const FUEL_TYPES = [
+  { id: 'petrol', n: 'Petrol' }, { id: 'diesel', n: 'Diesel' }, { id: 'ev', n: 'EV' },
+  { id: 'hybrid', n: 'Hybrid' }, { id: 'cng', n: 'CNG' }, { id: 'custom', n: 'Custom' }
+];
 const VT_PATHS = {
   bike: '<circle cx="5.5" cy="16.5" r="3.2"/><circle cx="18.5" cy="16.5" r="3.2"/><path d="M5.5 16.5l2.6-5.6h4.4l1.8 2.4h-3.8"/><path d="M12.5 10.9l1.6-2.6M13.6 8.3h3.2"/><path d="M15.6 8.5l2.9 8"/><path d="M8.1 10.9h-3"/><path d="M9 16.5h4"/>',
   car: '<path d="M3 16v-3.2c0-.8.5-1.5 1.2-1.7l2.4-.8 1.6-2.6c.3-.5.9-.8 1.5-.8h5.6c.6 0 1.1.3 1.4.7l2 2.6 1.9.6c.8.3 1.4 1 1.4 1.9V16"/><path d="M3 16h2.2M9.8 16h4.4M18.8 16H21"/><circle cx="7.5" cy="16.2" r="2.3"/><circle cx="16.5" cy="16.2" r="2.3"/><path d="M8.2 10.8h7.6"/>',
@@ -1602,24 +1636,37 @@ function vtLabel(c) {
   const t = VT_TYPES.find(x => x.id === id);
   return t ? t.n : 'Car';
 }
-function vtPickerHTML(p, cur, customName) {       // p = id prefix of the sheet ('c' for add, 'ec' for edit)
+function fuelLabel(c) {
+  const id = (c && c.fuelType) || 'petrol';
+  if (id === 'custom') return (c.fuelCustom || 'Custom');
+  const t = FUEL_TYPES.find(x => x.id === id);
+  return t ? t.n : 'Petrol';
+}
+function isEV(c) { return c && c.fuelType === 'ev'; }
+function vtPickerHTML(p, cur, customName) {
   return `<div class="field"><label>Vehicle Type</label>
-    <div class="vt-grid" role="group" aria-label="Vehicle type">${VT_TYPES.map(t => `<button type="button" class="vt" data-act="vt-pick" data-p="${p}" data-t="${t.id}" aria-pressed="${t.id === cur}">${vtIcon(t.id)}<span>${t.n}</span></button>`).join('')}</div>
+    <div class="vt-grid" role="group" aria-label="Vehicle type" style="grid-template-columns:repeat(3,1fr)">${VT_TYPES.map(t => `<button type="button" class="vt" data-act="vt-pick" data-p="${p}" data-t="${t.id}" aria-pressed="${t.id === cur}">${vtIcon(t.id)}<span>${t.n}</span></button>`).join('')}</div>
     <input type="hidden" id="${p}-vt" value="${esc(cur)}">
     <div id="${p}-vn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}><input id="${p}-vn" type="text" maxlength="20" placeholder="Type name, e.g. Van, Bus, Tractor" value="${esc(customName || '')}" autocomplete="off"></div></div>`;
+}
+
+function fuelPickerHTML(p, cur, customName) {
+  return `<div class="field"><label>Fuel Type</label>
+    <div class="vt-grid" role="group" aria-label="Fuel type" style="grid-template-columns:repeat(3,1fr)">${FUEL_TYPES.map(t => `<button type="button" class="vt" data-act="fuel-pick" data-p="${p}" data-t="${t.id}" aria-pressed="${t.id === cur}"><span>${t.n}</span></button>`).join('')}</div>
+    <input type="hidden" id="${p}-ft" value="${esc(cur)}">
+    <div id="${p}-fn-wrap" style="margin-top:8px" ${cur === 'custom' ? '' : 'hidden'}><input id="${p}-fn" type="text" maxlength="20" placeholder="Type fuel name, e.g. LPG" value="${esc(customName || '')}" autocomplete="off"></div></div>`;
 }
 
 /* ---------- MULTI-VEHICLE: VEHICLE SELECTION (Settings tab) ---------- */
 function carSelectionSection() {
   const list = S.cars.map(c => {
     const isActive = c.id === S.activeCarId;
-    const curKm = c.odometer || 0;
-    const bal = coBalance(c, activeCoId());
+        const curKm = c.odometer || 0;
     return `
       <div class="car-card ${isActive ? 'active' : ''}">
         <div class="car-card-body" data-act="switch-car" data-id="${esc(c.id)}">
           <b><i class="vt-ic">${vtIcon(c.vt || 'car')}</i>${esc(c.name)} ${isActive ? '<span class="badge-active">ACTIVE</span>' : ''}</b>
-          <span>${esc(vtLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${kmTxt(curKm)} &middot; Pending: ${currSym()} ${fmt2(bal)}</span>
+          <span>${esc(fuelLabel(c))} &middot; ${esc(c.plate || 'No Plate')} &middot; ${kmTxt(curKm)}</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;margin-left:8px">
           <button class="btn small ghost" data-act="edit-car" data-id="${esc(c.id)}">Edit</button>
@@ -1643,6 +1690,7 @@ function carSelectionSection() {
 function addCarSheet() {
   openSheet('add-car', '', 'Add New Vehicle', `
     ${vtPickerHTML('c', 'car', '')}
+    ${fuelPickerHTML('c', 'petrol', '')}
     <div class="field"><label for="c-name">Vehicle Name / Model</label><input id="c-name" type="text" placeholder="e.g. Honda Civic, Yamaha R15, Nissan Patrol" autocomplete="off"></div>
     <div class="field"><label for="c-plate">Number Plate / Reg No (optional)</label><input id="c-plate" type="text" placeholder="e.g. DXB-12345" autocomplete="off"></div>
     <div class="field"><label for="c-km">Current Odometer (${distUnit()})</label><input id="c-km" type="text" inputmode="numeric" placeholder="e.g. 150000" autocomplete="off"></div>
@@ -1656,6 +1704,7 @@ function saveNewCar() {
   const plate = $('#c-plate', sheet).value.trim();
   const km = fromDist(parseNum($('#c-km', sheet).value)) || 0;
   const vt = $('#c-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#c-vn', sheet).value.trim().slice(0, 20) : '';
+  const ft = $('#c-ft', sheet).value || 'petrol', fn = ft === 'custom' ? $('#c-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name is required.'); return; }
 
   const newCar = {
@@ -1664,6 +1713,8 @@ function saveNewCar() {
     plate,
     vt,
     vn,
+    fuelType: ft,
+    fuelCustom: fn,
     odometer: km,
     fills: [],
     payments: [],
@@ -1685,6 +1736,7 @@ function editCarSheet(id) {
   if (!c) return;
   openSheet('edit-car', id, 'Edit ' + c.name, `
     ${vtPickerHTML('ec', c.vt || 'car', c.vn)}
+    ${fuelPickerHTML('ec', c.fuelType || 'petrol', c.fuelCustom)}
     <div class="field"><label for="ec-name">Vehicle Name / Model</label><input id="ec-name" type="text" value="${esc(c.name)}"></div>
     <div class="field"><label for="ec-plate">Number Plate / Reg No</label><input id="ec-plate" type="text" value="${esc(c.plate || '')}"></div>
     <div class="field"><label for="ec-km">Current Odometer (${distUnit()})</label><input id="ec-km" type="text" inputmode="numeric" value="${c.odometer ? distIn(c.odometer) : ''}"></div>
@@ -1701,6 +1753,7 @@ function saveEditCar() {
   const plate = $('#ec-plate', sheet).value.trim();
   const km = fromDist(parseNum($('#ec-km', sheet).value));
   const vt = $('#ec-vt', sheet).value || 'car', vn = vt === 'custom' ? $('#ec-vn', sheet).value.trim().slice(0, 20) : '';
+  const ft = $('#ec-ft', sheet).value || 'petrol', fn = ft === 'custom' ? $('#ec-fn', sheet).value.trim().slice(0, 20) : '';
   if (!name) { toast('Vehicle name cannot be empty.'); return; }
   const c = S.cars.find(x => x.id === id);
   if (c) {
@@ -1708,6 +1761,8 @@ function saveEditCar() {
     c.plate = plate;
     c.vt = vt;
     c.vn = vn;
+    c.fuelType = ft;
+    c.fuelCustom = fn;
     if (km != null && km >= 0) c.odometer = km;
   }
   persistAll();
@@ -1947,11 +2002,11 @@ function viewHome() {
 
   const bal = c.balance, coId = c.coId, coN = payerName(coId);
   h += `
-    <section class="sec">
+        <section class="sec">
       <h2>Pending from ${esc(coN)}</h2>
       <div class="pending">
         <div class="big num"><span class="cur">${currSym()}</span> ${fmt2(bal)}</div>
-        <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
+        <p class="muted small num">${esc(coN)} Fuel ${currSym()} ${fmt2(c.comp)} &minus; Received ${currSym()} ${fmt2(c.received)}</p>
         ${bal < 0 ? '<p class="small" style="margin-top:6px;color:var(--ok)">' + esc(coN) + ' has paid more than the billed fuel.</p>' : ''}
         <button class="btn" data-act="add-pay" data-co="${esc(coId)}">Record payment</button>
       </div>
@@ -2058,8 +2113,12 @@ function payersSection() {
 
 function unitsSection() {
   const c = S.cfg || {}, code = c.currency || 'AED';
+  const car = getActiveCar();
+  const isEvCar = car && car.fuelType === 'ev'; // Safe check for EV
+
   const opt = x => `<option value="${x[0]}"${x[0] === code ? ' selected' : ''}>${esc(x[0] === 'CUSTOM' ? 'Custom\u2026' : (x[1] && x[1] !== x[0] ? x[0] + ' (' + x[1] + ')' : x[0]) + ' \u2013 ' + x[2])}</option>`;
   const seg = (k, curV, opts) => `<div class="seg" role="group">${opts.map(o => `<button type="button" data-act="set-unit" data-k="${k}" data-v="${o[0]}" aria-pressed="${curV === o[0]}">${o[1]}</button>`).join('')}</div>`;
+  
   return `
     <section class="sec" id="units-sec">
       <h2>Units &amp; Currency</h2>
@@ -2068,9 +2127,13 @@ function unitsSection() {
           <select id="u-cur">${CURRENCIES.map(opt).join('')}</select>
           <div id="u-cur-custom" style="margin-top:8px" ${code === 'CUSTOM' ? '' : 'hidden'}><input id="u-sym" type="text" maxlength="6" placeholder="Symbol or code, e.g. Rs, KSh" value="${esc(c.curSym || '')}" autocomplete="off"></div>
           <p class="small muted" style="margin-top:6px">Amounts will look like <b class="num" id="u-cur-prev">${esc(currSym())} ${fmt2(1250)}</b></p></div>
+        
         <div class="field" style="margin:0"><label>Distance</label>${seg('dist', distUnit(), [['km', 'Kilometres (km)'], ['mi', 'Miles (mi)']])}</div>
-        <div class="field" style="margin:0"><label>Fuel volume</label>${seg('vol', volUnit(), [['L', 'Litres (L)'], ['gal', 'US gallons'], ['galuk', 'UK gallons']])}</div>
-        <div class="field" style="margin:0"><label>Fuel economy</label>${seg('eco', ecoUnit(), [['kml', 'km/L'], ['l100', 'L/100 km'], ['mpg', 'mpg (US)'], ['mpguk', 'mpg (UK)']])}</div>
+        
+        <div class="field" style="margin:0"><label>Fuel volume</label>${isEvCar ? '<p class="small muted" style="padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--line);">Electric vehicles always use kWh. No need to select.</p>' : seg('vol', volUnit(), [['L', 'Litres (L)'], ['gal', 'US gallons'], ['galuk', 'UK gallons']])}</div>
+        
+        <div class="field" style="margin:0"><label>Fuel economy</label>${isEvCar ? '<p class="small muted" style="padding:10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--line);">Electric vehicles display economy in km/kWh automatically.</p>' : seg('eco', ecoUnit(), [['kml', 'km/L'], ['l100', 'L/100 km'], ['mpg', 'mpg (US)'], ['mpguk', 'mpg (UK)']])}</div>
+        
         <div class="field" style="margin:0"><label>Number format</label>${seg('grp', c.grp === 'in' ? 'in' : 'intl', [['intl', '1,234,567'], ['in', '12,34,567']])}</div>
         <p class="small muted">Your records are stored in km and litres underneath, so you can change these any time without changing or losing any data.</p>
       </div>
@@ -2110,7 +2173,7 @@ function fillRow(r) {
   const pcol = payerColor(r.b);
   const chip = `<span class="chip" style="color:${pcol};background:color-mix(in srgb,${pcol} 14%,var(--surface))">${esc(payerName(r.b))}</span>`;
   const l2 = r.rental ? 'Rental vehicle &middot; no odometer' : kmTxt(r.k) + (r.run != null && r.run > 0 ? ' &middot; +' + kmTxt(r.run) : '') + (r.days > 0 ? ' &middot; ' + r.days + ' d' : '');
-  const rt = r.rental ? '' : (r.avg != null ? ecoTxt(r.avg) : '&ndash;');
+    const rt = r.rental ? '' : (r.avg != null ? (isEV(C.car) ? r.avg.toFixed(2) + ' km/kWh' : ecoTxt(r.avg)) : '&ndash;');
   return `
     <button class="row" data-act="edit-fill" data-id="${esc(r.i)}">
       <span class="r1"><b>${fmtDate(r.d, true)}</b>${chip}<span class="amt">${fmt2(r.a)}</span></span>
@@ -2177,10 +2240,10 @@ function viewMoney() {
   let h = '<h1 class="page-title" style="margin-bottom:12px">Money & Reimbursement</h1>';
   const coN = payerName(c.coId);
   h += `
-    <div class="pending">
+        <div class="pending">
       <p class="muted small">Pending from ${esc(coN)} (${esc(car.name)})</p>
       <div class="big num"><span class="cur">${currSym()}</span> ${fmt2(c.balance)}</div>
-      <p class="muted small num">${esc(coN)} Fuel ${fmt2(c.comp)} &minus; Received ${fmt2(c.received)}</p>
+      <p class="muted small num">${esc(coN)} Fuel ${currSym()} ${fmt2(c.comp)} &minus; Received ${currSym()} ${fmt2(c.received)}</p>
       <button class="btn" data-act="add-pay" data-co="${esc(c.coId)}">Record payment</button>
     </div>
     <div style="margin-top:6px">${prevCompaniesHTML(c)}</div>
@@ -2330,11 +2393,18 @@ function checkFill(f, id) {
   const der = derive((car.fills || []).filter(x => x.i !== id).concat([cand]));
   const idx = der.findIndex(x => x.i === key), me = der[idx];
   let err = null, kind = 'missing', text = '';
+  
   if (f.a > 0 && f.r > 0) {
-    text = toVol(me.litres || 0).toFixed(1) + ' ' + volName();
+    text = toVol(me.litres || 0).toFixed(1) + ' ' + (isEV(car) ? 'kWh' : volName());
     if (f.rental) text += ' \u00b7 rental vehicle';
-    else if (me.run > 0) { text += ' \u00b7 ' + kmTxt(me.run) + ' run' + (me.avg != null ? ' \u00b7 ' + ecoTxt(me.avg) : ''); }
+    else if (me.run > 0) { 
+      text += ' \u00b7 ' + kmTxt(me.run) + ' run'; 
+      if (me.avg != null) {
+        text += ' \u00b7 ' + (isEV(car) ? me.avg.toFixed(2) + ' km/kWh' : ecoTxt(me.avg));
+      }
+    }
   }
+  
   if (!f.rental && f.k > 0) {
     if (me.run != null && me.run <= 0) { err = 'Odometer must be higher than previous fill (' + kmTxt(me.pk) + ').'; kind = 'order'; }
     else {
@@ -2342,12 +2412,14 @@ function checkFill(f, id) {
       if (nx && nx.run != null && nx.run <= 0) { err = 'Odometer must be lower than next fill (' + kmTxt(nx.k) + ').'; kind = 'order'; }
     }
   }
+  
   if (!err) {
     if (!f.d) err = 'Please choose a date.';
     else if (!(f.a > 0)) err = 'Please enter amount paid.';
-    else if (!(f.r > 0)) err = 'Please enter rate per ' + volWord() + '.';
+    else if (!(f.r > 0)) err = 'Please enter rate per ' + (isEV(car) ? 'kWh' : volWord()) + '.';
     else if (!f.rental && !(f.k > 0)) err = 'Please enter odometer reading.';
   }
+  
   return { err, kind, text };
 }
 
@@ -2375,13 +2447,16 @@ function fillSheet(id) {
   const lastRow = C && C.lastReal, anyRow = (car.fills || []).length ? sortFills(car.fills).slice(-1)[0] : null;
   const v = ex || { d: today(), k: null, a: null, r: anyRow ? anyRow.r : 2.57, b: activeCoId() };
   const rental = !!ex && ex.k == null;
+  const ev = isEV(car);
+  const volLabel = ev ? 'kWh' : volLong();
+
   openSheet('fill', id, ex ? 'Edit fill-up' : 'Add fill-up', `
     <div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${esc(v.d)}"></div>
     <label class="check"><input type="checkbox" id="f-rental" ${rental ? 'checked' : ''}> Rental vehicle (No odometer)</label>
     <div class="field" id="f-km-wrap"><label for="f-km">Odometer (${distUnit()})</label><input id="f-km" type="text" inputmode="numeric" placeholder="${lastRow ? 'Last: ' + kmNum(lastRow.k) : ''}" value="${v.k == null ? '' : esc(distIn(v.k))}">${scanRow('odo', 'Scan odometer')}</div>
     <div class="two">
       <div class="field"><label for="f-amt">Amount (${curCode()})</label><input id="f-amt" type="text" inputmode="decimal" value="${v.a == null ? '' : esc(v.a)}"></div>
-      <div class="field"><label for="f-rate">Rate/${volLong()}</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(rateIn(v.r))}"></div>
+      <div class="field"><label for="f-rate">Rate/${volLabel}</label><input id="f-rate" type="text" inputmode="decimal" value="${v.r == null ? '' : esc(rateIn(v.r))}"></div>
     </div>
     <div style="margin:-6px 0 14px">${scanRow('bill', 'Scan bill')}</div>
     <fieldset class="field"><legend>Paid by</legend>
@@ -3351,9 +3426,21 @@ const H = {
     const w = $('#' + p + '-vn-wrap', sheet);
     if (w) { w.hidden = t !== 'custom'; if (t === 'custom') $('#' + p + '-vn', sheet).focus(); }
   },
+    'fuel-pick': el => {
+    const p = el.dataset.p, t = el.dataset.t;
+    sheet.querySelectorAll('.vt[data-p="' + p + '"][data-act="fuel-pick"]').forEach(b => b.setAttribute('aria-pressed', String(b === el)));
+    $('#' + p + '-ft', sheet).value = t;
+    const w = $('#' + p + '-fn-wrap', sheet);
+    if (w) { w.hidden = t !== 'custom'; if (t === 'custom') $('#' + p + '-fn', sheet).focus(); }
+  },
   'set-unit': el => {
     const k = el.dataset.k, v = el.dataset.v;
     if (['dist', 'vol', 'eco', 'grp'].indexOf(k) < 0) return;
+    
+    // EV safety check
+    const car = getActiveCar();
+    if (car && car.fuelType === 'ev' && (k === 'vol' || k === 'eco')) return; 
+
     S.cfg[k] = v;
     if (k === 'dist' || k === 'vol') {            // suggest the matching fuel economy unit
       const d = distUnit(), vo = volUnit();
