@@ -373,13 +373,13 @@ const toVol = l => {
 const toRate = r => {
   if (r == null || !isFinite(r)) return r;
   const car = getActiveCar();
-  if (car && car.fuelType === 'ev') return r; // EV ke liye rate change nahi hoga (per kWh hi rahega)
+  if (car && car.fuelType === 'ev') return r; 
   return r * litresPer();
 };
 const fromRate = x => {
   if (x == null || !isFinite(x)) return x;
   const car = getActiveCar();
-  if (car && car.fuelType === 'ev') return x; // EV ke liye rate change nahi hoga
+  if (car && car.fuelType === 'ev') return x; 
   return Math.round((x / litresPer()) * 100000) / 100000;
 };
 const rateIn = r => (r == null ? '' : String(+toRate(r).toFixed(3)));
@@ -667,8 +667,7 @@ function derive(rows) {
             if (prevK != null) { 
         run = f.k - prevK; 
         if (litres > 0 && run > 0) {
-          // Base average calculate karo (run / litres)
-          // EV ke case me litres ka matlab kWh hai, toh run/kWh automatic ban jayega
+		
           avg = run / litres; 
         } 
       }
