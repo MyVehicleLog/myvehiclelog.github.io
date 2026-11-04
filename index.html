@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- SheetJS for Excel Import/Export with Dynamic Formulas -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+<script src="./xlsx.full.min.js" defer></script>
 
 
 <style>
@@ -1961,6 +1961,7 @@ function backupSection() {
       </div>
 
       <button class="btn danger" style="width:100%;margin-top:14px" data-act="open-reset-modal">🗑️ Clear / Reset Data</button>
+      <p class="small muted" style="text-align:center;margin:14px 0 0"><a href="./privacy.html" target="_blank" rel="noopener" style="color:var(--focus)">Privacy Policy</a></p>
     </section>
   `;
 }
@@ -3627,6 +3628,24 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+window.addEventListener('load', function () {
+  // Excel library: the local copy loads first; if it is missing or broken, fall back to the pinned CDN copy.
+  try {
+    if (!window.XLSX) {
+      var xs = document.createElement('script');
+      xs.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+      xs.async = true;
+      document.head.appendChild(xs);
+    }
+  } catch (e) {}
+  // Ask the browser not to clear this app's data when the phone runs low on storage.
+  try {
+    if (navigator.storage && navigator.storage.persisted && navigator.storage.persist) {
+      navigator.storage.persisted().then(function (p) { if (!p) return navigator.storage.persist(); }).catch(function () {});
+    }
+  } catch (e) {}
+});
 </script>
 
 </body>

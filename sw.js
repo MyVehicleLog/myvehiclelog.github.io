@@ -1,5 +1,11 @@
 const CACHE = 'vehiclelog-v2026.11.04';
 const OFFLINE_PAGE = './';
+// Core files kept ready for offline use. The page itself is required; the rest are best-effort,
+// so a missing file (for example the optional Excel library) can never stop the app from installing.
+const EXTRA_PRECACHE = [
+  './manifest.json', './icon-192.png', './icon-512.png', './logo.png',
+  './privacy.html', './xlsx.full.min.js'
+];
 
 // Google login and the Google Drive API must always go straight to the network.
 // They carry the user's data and must never be answered from the cache.
@@ -13,7 +19,8 @@ const isGoogleApi = url =>
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => cache.add(OFFLINE_PAGE))
+      .then(cache => cache.add(OFFLINE_PAGE)
+        .then(() => Promise.all(EXTRA_PRECACHE.map(u => cache.add(u).catch(() => {})))))
       .then(() => self.skipWaiting())
   );
 });
