@@ -1,4 +1,4 @@
-const CACHE = 'vehiclelog-v2026.10.31';
+const CACHE = 'vehiclelog-v2026.11.04';
 const OFFLINE_PAGE = './';
 
 // Google login and the Google Drive API must always go straight to the network.
