@@ -1361,16 +1361,16 @@ function openPdfRangeModal() {
   const car = getActiveCar();
   if (!car) { toast('Add a vehicle first.'); return; }
   const to = today();
-  const from = shiftMonths(to, -3);
+  const from = shiftMonths(to, -12);
   openSheet('pdf-range', '', 'Select Report Duration', `
-    <p class="small muted" style="margin:0 0 12px">Pick a date range for the PDF report. Maximum span is 3 months.</p>
+    <p class="small muted" style="margin:0 0 12px">Pick a date range for the PDF report. Maximum span is 12 months.</p>
     <div class="field"><label for="pr-from">From</label><input id="pr-from" type="date" value="${esc(from)}" max="${esc(to)}"></div>
     <div class="field"><label for="pr-to">To</label><input id="pr-to" type="date" value="${esc(to)}" max="${esc(to)}"></div>
     <button class="btn" style="width:100%;margin-top:6px" data-act="confirm-pdf-range">📄 Generate Report</button>
   `);
   $('#pr-from').addEventListener('change', e => {
     const f = e.target.value; if (!f) return;
-    const toEl = $('#pr-to'); const cap = shiftMonths(f, 3);
+    const toEl = $('#pr-to'); const cap = shiftMonths(f, 12);
     toEl.min = f; toEl.max = cap < today() ? cap : today();
     if (toEl.value < f || toEl.value > toEl.max) toEl.value = toEl.max;
   });
@@ -1380,8 +1380,8 @@ function confirmPdfRange() {
   const from = $('#pr-from').value, to = $('#pr-to').value;
   if (!from || !to) { toast('Please select both dates.'); return; }
   if (from > to) { toast('"From" date must be before "To" date.'); return; }
-  const maxTo = shiftMonths(from, 3);
-  if (to > maxTo) { toast('Range too long — max 3 months at once.'); return; }
+  const maxTo = shiftMonths(from, 12);
+  if (to > maxTo) { toast('Range too long — max 12 months at once.'); return; }
   exportPdfReport(from, to);
 }
 
