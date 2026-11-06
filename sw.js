@@ -1,4 +1,4 @@
-const CACHE = 'vehiclelog-v2026.11.04';
+const CACHE = 'vehiclelog-v2026.11.06';
 const OFFLINE_PAGE = './';
 // Core files kept ready for offline use. The page itself is required; the rest are best-effort,
 // so a missing file (for example the optional Excel library) can never stop the app from installing.

@@ -269,12 +269,115 @@ dialog.crop-ov::backdrop{background:#05080c}
   .p-card b{display:block;font-size:14px}
   .p-card span{font-size:11px;color:#555}
 }
+
+/* ---------- splash screen (fonts are bundled, nothing is loaded from the internet) ---------- */
+@font-face{font-family:'Outfit';font-style:normal;font-weight:600;font-display:swap;src:url(./fonts/outfit-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(./fonts/inter-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(./fonts/inter-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Great Vibes';font-style:normal;font-weight:400;font-display:swap;src:url(./fonts/great-vibes-latin-400-normal.woff2) format('woff2')}
+#splash{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;overflow:hidden;color:#fff;
+  font-family:'Outfit',system-ui,sans-serif;opacity:1;transition:opacity .45s ease;
+  background:radial-gradient(circle at 50% 30%,#1d2e6b 0%,#120d2b 50%,#05020a 100%);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#splash.sp-out{opacity:0;pointer-events:none}
+#splash *{margin:0;padding:0;box-sizing:border-box}
+#splash .sp-bar{width:100%;height:5px;display:flex;flex-shrink:0}
+#splash .sp-bar div{flex:1}
+#splash .sp-bar div:nth-child(1){background:#8A2BE2}#splash .sp-bar div:nth-child(2){background:#00BFFF}#splash .sp-bar div:nth-child(3){background:#FF1493}
+#splash .sp-main{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;padding:20px 0;width:100%;max-width:420px;margin:0 auto}
+#splash .sp-icon{position:relative;display:flex;justify-content:center;align-items:center;margin-top:10px}
+#splash .sp-logo{width:130px;height:130px;border-radius:50%;object-fit:cover;z-index:10;box-shadow:0 0 30px rgba(0,191,255,.6);
+  animation:spPulse 3s infinite alternate,spPop .8s cubic-bezier(.175,.885,.32,1.275) forwards;opacity:0;transform:scale(.8)}
+#splash .sp-ripple{position:absolute;width:130px;height:130px;border-radius:50%;border:2px solid #00BFFF;box-shadow:0 0 20px #00BFFF,inset 0 0 20px #00BFFF;opacity:0;z-index:1}
+#splash .sp-r1{animation:spRipple 3s infinite 0s}#splash .sp-r2{animation:spRipple 3s infinite 1s}#splash .sp-r3{animation:spRipple 3s infinite 2s}
+#splash .sp-text{display:flex;flex-direction:column;align-items:center;text-align:center;width:100%}
+#splash .sp-welcome{font-family:'Inter',system-ui,sans-serif;font-size:.85rem;font-weight:400;color:#cbd5e1;letter-spacing:5px;opacity:0;animation:spFade .8s forwards .4s}
+#splash .sp-brand{font-family:'Outfit',system-ui,sans-serif;font-size:1.9rem;font-weight:600;color:#F5E6B8;letter-spacing:1.5px;margin-top:5px;text-shadow:0 0 15px rgba(245,230,184,.4);opacity:0;animation:spFade .8s forwards .6s}
+#splash .sp-world{font-family:'Inter',system-ui,sans-serif;font-size:1rem;font-weight:400;color:#00BFFF;letter-spacing:6px;margin-top:2px;text-shadow:0 0 10px rgba(0,191,255,.5);opacity:0;animation:spFade .8s forwards .8s}
+#splash .sp-feats{display:flex;flex-direction:column;gap:8px;margin-top:20px;align-items:center;opacity:0;animation:spFade .8s forwards 1s}
+#splash .sp-feat{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Inter',system-ui,sans-serif;font-size:.7rem;font-weight:500;color:#cbd5e1;letter-spacing:1.5px}
+#splash .sp-feat::before,#splash .sp-feat::after{content:'\2726';display:inline-block;font-size:.8rem;color:#00BFFF;text-shadow:0 0 8px #00BFFF;margin-top:-1px}
+#splash .sp-tools{display:flex;justify-content:center;gap:12px;opacity:0;animation:spFade .8s forwards 1.2s}
+#splash .sp-tool{width:22px;height:22px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(0,191,255,.3))}
+#splash .sp-tool:nth-child(1){stroke:#60A5FA}#splash .sp-tool:nth-child(2){stroke:#FCD34D}#splash .sp-tool:nth-child(3){stroke:#F87171}
+#splash .sp-tool:nth-child(4){stroke:#A78BFA}#splash .sp-tool:nth-child(5){stroke:#34D399}#splash .sp-tool:nth-child(6){stroke:#38BDF8}
+#splash .sp-bottom{display:flex;flex-direction:column;align-items:center;width:100%;opacity:0;animation:spFade .8s forwards 1.4s}
+#splash .sp-sign{font-family:'Great Vibes',cursive;font-size:2.8rem;color:#e0e0e0;transform:rotate(-4deg);line-height:1.2}
+#splash .sp-line{width:140px;height:1px;background:linear-gradient(90deg,transparent,#fff,transparent);margin-top:2px}
+#splash .sp-explore{font-family:'Inter',system-ui,sans-serif;font-size:.75rem;font-weight:400;color:#94a3b8;margin-top:12px;letter-spacing:1px}
+#splash .sp-dots{display:flex;gap:6px;margin-top:15px}
+#splash .sp-dots span{width:5px;height:5px;border-radius:50%;background:#475569;transition:.3s}
+#splash .sp-dots span.on{background:#00BFFF;box-shadow:0 0 10px #00BFFF}
+@keyframes spRipple{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.5);opacity:0}}
+@keyframes spPulse{0%{box-shadow:0 0 20px rgba(0,191,255,.4)}100%{box-shadow:0 0 50px rgba(138,43,226,.8)}}
+@keyframes spPop{to{opacity:1;transform:scale(1)}}
+@keyframes spFade{to{opacity:1}}
+@media (max-height:680px){
+  #splash .sp-main{padding:10px 0}
+  #splash .sp-logo,#splash .sp-ripple{width:104px;height:104px}
+  #splash .sp-brand{font-size:1.6rem}#splash .sp-sign{font-size:2.2rem}
+  #splash .sp-feats{margin-top:12px;gap:5px}#splash .sp-explore{margin-top:6px}#splash .sp-dots{margin-top:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  #splash .sp-logo,#splash .sp-welcome,#splash .sp-brand,#splash .sp-world,#splash .sp-feats,#splash .sp-tools,#splash .sp-bottom{animation:none;opacity:1;transform:none}
+  #splash .sp-ripple{display:none}
+}
+@media print{#splash{display:none!important}}
 </style>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="sp-bar"><div></div><div></div><div></div></div>
+  <div class="sp-main">
+    <div class="sp-icon">
+      <div class="sp-ripple sp-r1"></div><div class="sp-ripple sp-r2"></div><div class="sp-ripple sp-r3"></div>
+      <img src="./sscr.png" alt="" class="sp-logo">
+    </div>
+    <div class="sp-text">
+      <div class="sp-welcome">Welcome To</div>
+      <div class="sp-brand">Kadir-ekhasti</div>
+      <div class="sp-world">Apps World</div>
+      <div class="sp-feats">
+        <div class="sp-feat">Smart Tools</div>
+        <div class="sp-feat">Useful Apps</div>
+        <div class="sp-feat">Performance Enhanced</div>
+      </div>
+    </div>
+    <div class="sp-tools">
+      <svg class="sp-tool" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07M12 6l3 3m-3-3L9 9m9 6-3-3m3 3-3 3M6 15l3-3m-3 3 3 3"/></svg>
+      <svg class="sp-tool" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="sp-tool" viewBox="0 0 24 24"><path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8z"/><path d="M12 10c0 0-2 2-2 4a2 2 0 0 0 4 0c0-2-2-4-2-4z"/></svg>
+      <svg class="sp-tool" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg class="sp-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      <svg class="sp-tool" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+    </div>
+    <div class="sp-bottom">
+      <div class="sp-sign">Kadir-ekhasti</div>
+      <div class="sp-line"></div>
+      <div class="sp-explore">Let's explore together...</div>
+      <div class="sp-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</div>
+<script>
+// Splash: shows for about 3 s (1.5 s if the phone asks for reduced motion), tap to skip. It can never block the app.
+(function () {
+  try {
+    var sp = document.getElementById('splash'); if (!sp) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var dots = Array.prototype.slice.call(sp.querySelectorAll('.sp-dots span')), i = 0, done = false;
+    function tick() { dots.forEach(function (d) { d.classList.remove('on'); }); if (dots[i]) dots[i].classList.add('on'); i = (i + 1) % dots.length; }
+    tick(); var iv = setInterval(tick, 200);
+    function close() { if (done) return; done = true; clearInterval(iv); sp.classList.add('sp-out'); setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 500); }
+    sp.addEventListener('click', close);
+    setTimeout(close, reduce ? 1500 : 3000);
+  } catch (e) { var el = document.getElementById('splash'); if (el && el.parentNode) el.parentNode.removeChild(el); }
+})();
+</script>
+
 <div class="wrap">
   <header class="top-bar">
     <h1 class="page-title" id="page-hdr" data-act="tab" data-tab="home" style="cursor:pointer" role="button" aria-label="Go to Home">Vehicle Log</h1>
@@ -294,7 +397,7 @@ dialog.crop-ov::backdrop{background:#05080c}
   <button data-act="tab" data-tab="money"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.3c-.6-.8-1.5-1.3-2.7-1.3-1.5 0-2.6.8-2.6 2 0 2.9 5.4 1.3 5.4 4.2 0 1.2-1.1 2-2.7 2-1.2 0-2.2-.5-2.8-1.4"/><path d="M12 6.4V8m0 8v1.6"/></svg>Money</button>
   <button data-act="tab" data-tab="service"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.3-5.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Service</button>
   <button data-act="tab" data-tab="data"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
-</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.11.04</span></div></nav>
+</div><div class="app-footer"><span>Created By: Kadir-ekhasti</span><span>Version: v2026.11.06</span></div></nav>
 
 <dialog id="sheet" aria-label="Modal"></dialog>
 <div id="print-report"></div>
